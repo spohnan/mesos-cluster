@@ -8,6 +8,8 @@
       "mem": 128,
       "constraints": [["hostname", "UNIQUE"]],
       "acceptedResourceRoles": ["master_node"],
+      "labels": { "billing": "infrastructure" },
+      "healthChecks": [ { "path": "/v1/version", "port": 8123} ],
       "container": {
         "type": "DOCKER",
         "docker": {
@@ -18,9 +20,7 @@
         "volumes": [
           { "containerPath": "/config.json", "hostPath": "/etc/mesos-dns/config.json", "mode": "RO" }
         ]
-      },
-      "labels": { "billing": "infrastructure" },
-      "healthChecks": [ { "path": "/v1/version", "port": 8123} ]
+      }
     }
     ,
     {
@@ -29,10 +29,12 @@
       "cpus": 0.2,
       "mem": 200,
       "labels": { "billing": "infrastructure" },
-      "ports": [ 2003, 8083, 8086],
+      "healthChecks": [ { "path": "/", "port": 8083} ],
       "env": {
         "GRAPHITE_DB": "graphite",
-        "GRAPHITE_BINDING": ":2003"
+        "GRAPHITE_BINDING": ":2003",
+        "PRE_CREATE_DB": "cadvisor",
+        "INFLUXDB_INIT_PWD": "",
       },
       "container": {
         "type": "DOCKER",
@@ -40,7 +42,7 @@
           {"containerPath": "/data", "hostPath": "/mnt/docker/influxdb", "mode": "RW"}
         ],
         "docker": {
-          "image": "tutum/influxdb",
+          "image": "tutum/influxdb:0.10",
           "network": "HOST"
         }
       }
@@ -59,10 +61,13 @@
       "container": {
         "type": "DOCKER",
         "docker": {
-          "image": "google/cadvisor:latest",
+          "image": "google/cadvisor:v0.22.0",
           "privileged": true,
           "network": "BRIDGE",
-          "portMappings": [{"hostPort": 0, "containerPort": 8080}]
+          "portMappings": [{"hostPort": 0, "containerPort": 8080}],
+          "parameters": [
+            { "key": "entrypoint", "value": "/usr/bin/cadvisor" }
+          ]
         },
         "volumes": [
           {"containerPath": "/rootfs", "hostPath": "/", "mode": "RO"},
@@ -73,7 +78,9 @@
         "args": [
           "-storage_driver", "influxdb",
           "-storage_driver_db", "cadvisor",
-          "-storage_driver_host", "influxdb-i.marathon.mesos:8086"
+          "-storage_driver_host", "influxdb-i.marathon.mesos:8086",
+          "-storage_driver_user", "root",
+          "-storage_driver_password", "root"
         ]
       }
     }
