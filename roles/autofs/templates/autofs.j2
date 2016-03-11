@@ -1,0 +1,23 @@
+#
+# Init syatem options
+#
+# If the kernel supports using the autofs miscellanous device
+# and you wish to use it you must set this configuration option
+# to "yes" otherwise it will not be used.
+#
+USE_MISC_DEVICE="yes"
+#
+# Use OPTIONS to add automount(8) command line options that
+# will be used when the daemon is started.
+#
+
+OPTIONS=""
+
+MASTER_MAP_NAME="auto.master"   # defines default primary configuration file
+TIMEOUT=300                     # the max idle time (in seconds) after which filesystem is unmounted
+NEGATIVE_TIMEOUT=60             # negative timeout for failed mount attempts (default 60)
+
+LOGGING="verbose"               # enable logging (read logs to /var/log/messages)
+MOUNT_NFS_DEFAULT_PROTOCOL=4    # default protocol used by mount.nfs
+BROWSE_MODE="yes"               # set to yes by default. Set it to NO and autofs only creates
+				                # mount points when something is actually mounted on them

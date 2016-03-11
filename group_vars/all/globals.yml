@@ -1,0 +1,26 @@
+# Package repos
+mesosphere_yum_repo: "http://repos.mesosphere.com/el/{{ ansible_distribution_major_version }}/noarch/RPMS/mesosphere-el-repo-7-2.noarch.rpm"
+epel_repo: "http://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
+
+# Tool versions used when downloading packages
+mesos_version: "0.27.1"
+marathon_version: "0.15.2"
+java_version: "8"
+
+# Mesos cluster config defaults
+mesos_cluster_name: "dev-cluster"
+mesos_containerizers: "docker,mesos"
+mesos_master_count: 1
+
+# Mesos DNS defaults
+external_dns_resolver: "\"8.8.8.8\", \"8.8.4.4\""
+
+# Location of the marathon launch helper script
+marathon_launch_config_home: /home/centos
+
+# Elasticsearch used for logs defaults
+elasticsearch_cluster_name: GeointServices
+
+# Gluster file system mount information (optional)
+gluster_mount_dir: /mnt
+gluster_mount_info: ""

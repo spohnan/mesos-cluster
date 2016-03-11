@@ -1,0 +1,220 @@
+{
+  "id": "/i",
+  "apps": [
+    {
+      "id": "/i/mesos-dns",
+      "instances": {{ mesos_master_count }},
+      "cpus": 0.2,
+      "mem": 128,
+      "constraints": [["hostname", "UNIQUE"]],
+      "acceptedResourceRoles": ["master_node"],
+      "container": {
+        "type": "DOCKER",
+        "docker": {
+          "image": "spohnan/mesos-dns",
+          "network": "HOST",
+          "forcePullImage": true
+        },
+        "volumes": [
+          { "containerPath": "/config.json", "hostPath": "/etc/mesos-dns/config.json", "mode": "RO" }
+        ]
+      },
+      "labels": { "billing": "infrastructure" },
+      "healthChecks": [ { "path": "/v1/version", "port": 8123} ]
+    }
+    ,
+    {
+      "id": "/i/influxdb",
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 200,
+      "labels": { "billing": "infrastructure" },
+      "ports": [ 2003, 8083, 8086],
+      "env": {
+        "GRAPHITE_DB": "graphite",
+        "GRAPHITE_BINDING": ":2003"
+      },
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {"containerPath": "/data", "hostPath": "/mnt/docker/influxdb", "mode": "RW"}
+        ],
+        "docker": {
+          "image": "tutum/influxdb",
+          "network": "HOST"
+        }
+      }
+    }
+    ,
+    {
+      "id": "/i/cadvisor",
+      "dependencies": ["/i/influxdb", "/i/mesos-dns"],
+      "instances": {{ server_count }},
+      "cpus": 0.2,
+      "mem": 100,
+      "constraints": [["hostname", "UNIQUE"]],
+      "acceptedResourceRoles": ["*", "master_node"],
+      "healthChecks": [{"path": "/", "portIndex": 0}],
+      "labels": { "billing": "infrastructure" },
+      "container": {
+        "type": "DOCKER",
+        "docker": {
+          "image": "google/cadvisor:latest",
+          "privileged": true,
+          "network": "BRIDGE",
+          "portMappings": [{"hostPort": 0, "containerPort": 8080}]
+        },
+        "volumes": [
+          {"containerPath": "/rootfs", "hostPath": "/", "mode": "RO"},
+          {"containerPath": "/var/run", "hostPath": "/var/run", "mode": "RW"},
+          {"containerPath": "/sys", "hostPath": "/sys", "mode": "RO"},
+          {"containerPath": "/var/lib/docker", "hostPath": "/var/lib/docker/", "mode": "RO"}
+        ],
+        "args": [
+          "-storage_driver", "influxdb",
+          "-storage_driver_db", "cadvisor",
+          "-storage_driver_host", "influxdb-i.marathon.mesos:8086"
+        ]
+      }
+    }
+    ,
+    {
+      "id": "/i/collectd-master",
+      "dependencies": ["/i/influxdb", "/i/mesos-dns"],
+      "instances": {{ mesos_master_count }},
+      "cpus": 0.2,
+      "mem": 100,
+      "acceptedResourceRoles": ["master_node"],
+      "labels": { "billing": "infrastructure" },
+      "env": {
+        "GRAPHITE_HOST": "influxdb-i.marathon.mesos",
+        "MESOS_MODE": "master",
+        "MESOS_HOST": "localhost",
+        "MESOS_PORT": "5050",
+        "MESOS_VERSION": "0.27"
+      },
+      "container": {
+        "type": "DOCKER",
+        "docker": {
+          "image": "bobrik/collectd-mesos",
+          "network": "HOST"
+        }
+      }
+    }
+    ,
+    {
+      "id": "/i/collectd-worker",
+      "dependencies": ["/i/influxdb", "/i/mesos-dns"],
+      "instances": {{ server_count }},
+      "cpus": 0.2,
+      "mem": 100,
+      "acceptedResourceRoles": ["*", "master_node"],
+      "labels": { "billing": "infrastructure" },
+      "env": {
+        "GRAPHITE_HOST": "influxdb-i.marathon.mesos",
+        "MESOS_MODE": "slave",
+        "MESOS_HOST": "localhost",
+        "MESOS_PORT": "5051",
+        "MESOS_VERSION": "0.27"
+      },
+      "container": {
+        "type": "DOCKER",
+        "docker": {
+          "image": "bobrik/collectd-mesos",
+          "network": "HOST"
+        }
+      }
+    }
+    ,
+    {
+      "id": "/i/grafana",
+      "dependencies": ["/i/influxdb"],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 100,
+      "labels": { "billing": "infrastructure" },
+      "healthChecks": [{"path": "/", "portIndex": 0}],
+      "env": {
+        "HTTP_USER": "admin",
+        "HTTP_PASS": "admin"
+      },
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {"containerPath": "/var/lib/grafana", "hostPath": "/mnt/docker/graphana", "mode": "RW"}
+        ],
+        "docker": {
+          "image": "grafana/grafana",
+          "network": "BRIDGE",
+          "portMappings": [{"containerPort": 3000, "hostPort": 0, "servicePort": 3000, "protocol": "tcp"}]
+        }
+      }
+    }
+    ,
+    {
+      "id": "/i/elasticsearch",
+      "dependencies": [ "/i/mesos-dns", "/i/influxdb" ],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 512,
+      "labels": { "billing": "infrastructure" },
+      "container": {
+        "docker": {
+          "image": "mesos/elasticsearch-scheduler:1.0.0",
+          "network": "HOST"
+        },
+        "volumes": [ {"containerPath": "/etc/hosts", "hostPath": "/etc/hosts", "mode": "RO"} ]
+      },
+      "env": { "JAVA_OPTS": "-Xms128m -Xmx256m" },
+      "args": [
+        "--zookeeperMesosUrl", "zk://{{ zookeeper_hostnames }}/mesos",
+        "--elasticsearchClusterName", "{{ elasticsearch_cluster_name }}",
+        "--elasticsearchNodes", "{{ server_count - mesos_master_count }}",
+        "--elasticsearchCpu", "0.2",
+        "--elasticsearchRam", "512",
+        "--elasticsearchDisk", "5000",
+        "--dataDir", "/mnt/docker/elasticsearch"
+      ]
+    }
+    ,
+    {
+      "id": "/i/kibana",
+      "dependencies": [ "/i/elasticsearch" ],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 512.0,
+      "labels": { "billing": "infrastructure" },
+      "container": {
+        "docker": {
+          "image": "kibana:4.3",
+          "network": "BRIDGE",
+          "portMappings": [{"hostPort": 0, "containerPort": 5601}]
+        }
+      },
+      "env": {
+        "ELASTICSEARCH_URL": "http://elasticsearch-i.marathon.mesos:31000"
+      }
+    }
+    ,
+    {
+      "id": "/i/jenkins-master",
+      "dependencies": [ "/i/mesos-dns" ],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 2048,
+      "labels": { "billing": "infrastructure" },
+      "container": {
+        "type": "DOCKER",
+    	"volumes": [ { "containerPath": "/var/lib/jenkins", "hostPath": "/mnt/docker/jenkins", "mode": "RW" } ],
+    	"docker": {
+          "image": "spohnan/jenkins-mesos",
+          "network": "HOST"
+    	}
+      },
+      "env": {
+       "JENKINS_JAVA_OPTIONS": "-Dhudson.slaves.NodeProvisioner.MARGIN=40 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.75 -Xms512m -Xmx2000m -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York"
+      },
+      "healthChecks": [ { "path": "/", "port": 8080 } ]
+    }
+  ]
+}

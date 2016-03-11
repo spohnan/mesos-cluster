@@ -1,0 +1,236 @@
+#
+# Update system settings
+#
+- name: Update system settings
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
+  become: yes
+  vars_files:
+    - "vars/{{ varfile }}"
+  tasks:
+
+  - name: Update the hostname to match the Name tag
+    hostname: name="{{ ec2_tag_Name }}.{{ domain }}"
+    tags: system_settings
+
+  - name: Ensure hostname is preserved in cloud-init
+    lineinfile: "dest=/etc/cloud/cloud.cfg regexp='^preserve_hostname' line='preserve_hostname: true' state=present"
+    tags: system_settings
+
+  - name: Turn off ipv6
+    sysctl: name=net.ipv6.conf.all.disable_ipv6 value=1 state=present
+    tags: system_settings
+
+  - name: Turn off ipv6
+    sysctl: name=net.ipv6.conf.default.disable_ipv6 value=1 state=present
+    tags: system_settings
+
+  - name: Turn off selinux
+    selinux: state=disabled
+    tags: system_settings
+
+  - name: Turn down vm.swappiness setting
+    sysctl: name=vm.swappiness value=5 state=present
+    tags: system_settings
+
+#
+# Identify master/zookeeper node(s)
+#
+- name: Identify master node(s), update name and tag with Role=master
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_master"
+  become: yes
+  vars_files:
+    - "vars/{{ varfile }}"
+  tasks:
+
+  - add_host: name="{{ item.1 }}" groups=mesos_masters,zookeeper_hosts zoo_id="{{ item.0 }}"
+    with_indexed_items: "{{ play_hosts }}"
+    tags: always
+
+#
+# Update /etc/hosts network names if using that instead of dnsmasq or dns
+#
+- name: Update /etc/hosts
+  hosts: "tag_Type_storage:tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
+  become: true
+  vars_files:
+    - "vars/{{ varfile }}"
+  tasks:
+
+  - name: Update /etc/hosts file
+    lineinfile: dest=/etc/hosts regexp='.*{{ hostvars[item].ansible_hostname }}$' line='{{ hostvars[item].ansible_default_ipv4.address }} {{ hostvars[item].ansible_fqdn }} {{ hostvars[item].ansible_hostname }}' state=present
+    when: hostvars[item].ansible_default_ipv4.address is defined
+    with_items: "{{ play_hosts }}"
+    tags: use_hosts_file
+
+#
+# Install Java
+#
+- name: Install Java
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
+  become: true
+  vars_files:
+    - "vars/{{ varfile }}"
+  roles:
+    - { role: java, tags: ['install_java'] }
+
+#
+# Configure zookeeper(s)
+#
+- name: Configure zookeeper(s)
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_master"
+  become: true
+  vars_files:
+    - "vars/{{ varfile }}"
+  vars:
+    - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
+  roles:
+    - { role: zookeeper, tags: ['configure_zookeeper'] }
+  tasks:
+
+    - name: Start zookeeper
+      service: name=zookeeper state=started enabled=yes
+      tags: configure_zookeeper
+
+#
+# Install all common software on each cluster node
+#
+- name: Install all common software on each cluster node
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ cluster_prefix }}"
+  become: true
+  vars_files:
+    - "vars/{{ varfile }}"
+  vars:
+    - docker_opts: "--log-driver=gelf --log-opt gelf-address=udp://localhost:12201 --storage-opt dm.datadev=/dev/docker-storage/data --storage-opt dm.metadatadev=/dev/docker-storage/metadata"
+    - dns_servers: "{% for host in groups['mesos_masters'] %}prepend domain-name-servers {{ hostvars[host].ec2_private_ip_address }};\n{% endfor %}"
+    - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_private_ip_address }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
+    - logstash_version: "2.2"
+    - logstash_defaults: |
+        LS_USER=root
+        LS_HEAP_SIZE="256m"
+    - logstash_inputs: |
+        gelf {
+          type => docker
+          port => 12201
+        }
+    - logstash_outputs: |
+        elasticsearch {
+          hosts => "http://elasticsearch-i.marathon.mesos:31000"
+        }
+    - logstash_filters: ""
+  roles:
+  - { role: autofs, tags: ['install_common_software', 'autofs'] }
+  - { role: docker-disk, tags: ['install_common_software', 'docker'] }
+  - { role: docker, tags: ['install_common_software', 'docker'] }
+  - { role: gluster, type: "{{ ec2_tag_Type }}", tags: ['install_common_software', 'gluster'] }
+  - { role: logstash, tags: ['install_common_software', 'logstash'] }
+  tasks:
+
+  - name: Start docker
+    service: name=docker state=started enabled=yes
+    tags:
+      - install_common_software
+      - docker
+
+  # If this is your initial install you'll need at least a network restart to get this into /etc/resolv.conf
+  # To pick up all the other system settings and possible RPM updates you'll want to reboot once before using
+  # Note: The config file is saved to each node as if not bound to the local interface it would use IPv6
+  - name: Ensure mesos-dns servers are configured in dhclient.conf
+    blockinfile:
+      dest: /etc/dhcp/dhclient.conf
+      block: |
+        {{ dns_servers }}
+    tags:
+      - install_common_software
+      - mesos-dns
+
+  - name: Ensure mesos-dns config directory is present
+    file: path=/etc/mesos-dns state=directory
+    tags:
+      - install_common_software
+      - mesos-dns
+
+  - name: Create meso-dns config file
+    template: src=files/mesos-dns-config.j2 dest=/etc/mesos-dns/config.json mode=0644
+    tags:
+      - install_common_software
+      - mesos-dns
+
+  - name: Ensure logstash config directory is present
+    file: path=/etc/logstash state=directory
+    tags:
+      - install_common_software
+      - logstash
+
+  - name: Create logstash config file
+    template: src=files/gelf.conf.j2 dest=/etc/logstash/gelf.conf mode=0644
+    tags:
+      - install_common_software
+      - logstash
+
+#
+# Install Mesos master(s)
+# This config runs the worker role as well but restricts with a special default role
+#
+- name: Install Mesos master(s)
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_master"
+  become: true
+  vars_files:
+    - "vars/{{ varfile }}"
+  vars:
+    - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
+  roles:
+    - { role: 'mesos', mesos_install_mode: "master-slave", "mesos_default_role": "master_node", tags: ['install_mesos_masters', 'mesos'] }
+    - { role: 'marathon', marathon_hostname: "{{ ec2_tag_Name }}.{{ domain }}", "mesos_role": "master_node", tags: ['install_mesos_masters', 'marathon', 'haproxy'] }
+    - { role: 'chronos', chronos_zk_connect: "zk://{{ zookeeper_hostnames }}/{{chronos_zk_chroot}}", tags: ['install_mesos_masters', 'chronos'] }
+  pre_tasks:
+
+    - name: Install HAProxy
+      yum: name=haproxy state=latest
+      tags:
+        - install_mesos_masters
+        - haproxy
+
+    - name: Start HAProxy
+      service: name=haproxy state=started enabled=yes
+      tags:
+        - install_mesos_masters
+        - haproxy
+
+  tasks:
+
+    - name: Start marathon
+      service: name=marathon state=started enabled=yes
+      tags:
+        - install_mesos_masters
+        - marathon
+
+    - name: Install marathon launcher helper script
+      copy: src=../files/marathon.sh dest=/etc/profile.d/marathon.sh mode=0644
+      tags:
+        - install_mesos_masters
+        - marathon
+
+    - name: Install marathon infrastructure launch script
+      template: src=../files/infrastructure.json.j2 dest={{ marathon_launch_config_home}}/infrastructure.json mode=0644
+      tags:
+        - install_mesos_masters
+        - marathon
+
+    - name: Install cluster bookmarks file
+      template: src=../files/cluster-bookmarks.txt.j2 dest={{ marathon_launch_config_home}}/cluster-bookmarks.txt mode=0644
+      tags:
+        - install_mesos_masters
+        - bookmarks
+
+#
+# Install Mesos workers(s)
+#
+- name: Install Mesos master(s)
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_worker"
+  become: true
+  vars_files:
+    - "vars/{{ varfile }}"
+  vars:
+    - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
+  roles:
+    - { role: 'mesos', mesos_install_mode: "slave", tags: ['install_mesos_workers'] }

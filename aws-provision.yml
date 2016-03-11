@@ -1,0 +1,46 @@
+#
+# Create mesos master node(s)
+#
+- name: Create mesos master node(s)
+  any_errors_fatal: true
+  hosts: localhost
+  connection: local
+  vars_files:
+    - "vars/{{ varfile }}"
+  vars:
+    - role: "master"
+    - ec2_tag_Type: "mesos"
+    - ec2_instance_type: "{{ ec2_storage_server_instance_type}}"
+    - existing_master_names: "{{ groups['tag_Role_master'] | default([]) | intersect( groups['tag_Cluster_' + cluster_prefix] | default([]) ) }}"
+    - new_server_names: |
+        {% for s in range(0, mesos_master_count - existing_master_names | length ) -%}
+          {{ cluster_prefix }}-{{ ec2_tag_Type }}-master-{{ ( s ~ ec2_tag_Type ~ ansible_date_time.iso8601_micro ) | hash('sha1')|string | truncate(6, false, '')}}{% if not loop.last %},{% endif %}
+        {%- endfor %}
+    - server_names: "{{ existing_master_names | union(new_server_names.strip().split(',')) }}"
+  roles:
+    - python-modules
+    - aws-instances
+    - aws-disks
+
+#
+# Create mesos worker node(s)
+#
+- name: Create mesos worker node(s)
+  any_errors_fatal: true
+  hosts: localhost
+  connection: local
+  vars_files:
+    - "vars/{{ varfile }}"
+  vars:
+    - role: "worker"
+    - ec2_tag_Type: "mesos"
+    - ec2_instance_type: "{{ ec2_storage_server_instance_type}}"
+    - existing_worker_names: "{{ groups['tag_Role_worker'] | default([]) | intersect( groups['tag_Cluster_' + cluster_prefix] | default([]) ) }}"
+    - new_server_names: |
+        {% for s in range(0, server_count - mesos_master_count - existing_worker_names | length ) -%}
+          {{ cluster_prefix }}-{{ ec2_tag_Type }}-{{ ( s ~ ec2_tag_Type ~ ansible_date_time.iso8601_micro ) | hash('sha1')|string | truncate(6, false, '')}}{% if not loop.last %},{% endif %}
+        {%- endfor %}
+    - server_names: "{{ existing_worker_names | union(new_server_names.strip().split(',')) }}"
+  roles:
+    - aws-instances
+    - aws-disks

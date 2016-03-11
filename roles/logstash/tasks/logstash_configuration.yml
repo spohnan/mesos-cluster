@@ -1,0 +1,31 @@
+---
+- name: Copy Logstash Input Configuration
+  template: src=input.conf.j2
+            dest={{ logstash_conf_dir }}input.conf
+            owner=root 
+            group=root 
+            mode=0644
+  notify:
+   - restart logstash
+  tags: logstash_inputs
+
+- name: Copy Logstash Filter Configuration
+  template: src=filters.conf.j2
+            dest={{ logstash_conf_dir }}filters.conf
+            owner=root 
+            group=root 
+            mode=0644
+  notify:
+   - restart logstash
+  tags: logstash_filters
+
+- name: Copy Logstash Output Configuration
+  template: src=output.conf.j2
+            dest={{ logstash_conf_dir }}output.conf
+            owner=root 
+            group=root 
+            mode=0644
+  notify:
+   - restart logstash
+  tags: logstash_outputs
+

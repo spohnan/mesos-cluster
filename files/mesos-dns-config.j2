@@ -1,0 +1,10 @@
+{
+  "zk": "zk://{{ zookeeper_hostnames }}/mesos",
+  "refreshSeconds": 60,
+  "ttl": 60,
+  "domain": "mesos",
+  "port": 53,
+  "listener": "{{ ec2_private_ip_address }}",
+  "resolvers": [{{ external_dns_resolver }}],
+  "IPSources": ["host"]
+}

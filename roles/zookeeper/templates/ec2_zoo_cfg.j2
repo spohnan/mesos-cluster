@@ -1,0 +1,11 @@
+tickTime={{ tick_time }}
+dataDir={{ data_dir }}
+dataLogDir={{ log_dir }}
+clientPort={{ client_port }}
+initLimit={{ init_limit }}
+syncLimit={{ sync_limit }}
+autopurge.purgeInterval=3
+
+{% for host in groups['zookeeper_hosts'] %}
+server.{{ hostvars[host].zoo_id }}={{ hostvars[host].ec2_private_ip_address }}:2888:3888
+{% endfor %}
