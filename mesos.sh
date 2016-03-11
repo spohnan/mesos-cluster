@@ -1,13 +1,13 @@
 #!/usr/bin/env bash
 #
 # Usage: mesos.sh
-# 			--provider [aws|gce]
-# 			--prefix [NODE_NAME_PREFIX]
-# 			--vars [variable file name]
-# 			--action [CONFIG_STEP]
-# 			--tags [ comma separated task tags ]      # optional
-# 			--skip-tags [ comma separated task tags ] # optional
-#			--verbose                                 # optionally run ansible with -vvv
+# 		--provider [aws|gce]
+# 		--prefix [NODE_NAME_PREFIX]
+# 		--vars [variable file name]
+# 		--action [CONFIG_STEP]
+# 		--tags [ comma separated task tags ]      # optional
+# 		--skip-tags [ comma separated task tags ] # optional
+#		--verbose                                 # optionally run ansible with -vvv
 
 # Parse arguments
 declare -A ARGS
