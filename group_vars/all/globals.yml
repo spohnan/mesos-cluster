@@ -19,7 +19,7 @@ external_dns_resolver: "\"8.8.8.8\", \"8.8.4.4\""
 marathon_launch_config_home: /home/centos
 
 # Elasticsearch used for logs defaults
-elasticsearch_cluster_name: GeointServices
+elasticsearch_cluster_name: DemoCluster
 
 # Gluster file system mount information (optional)
 gluster_mount_dir: /mnt
