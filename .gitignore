@@ -1,0 +1,10 @@
+# IDE files
+*.iml
+.idea/
+
+# Build artifacts
+docs/target/
+
+# Other random cruft
+.DS_Store
+*.retry

@@ -1,0 +1,95 @@
+= Mesos Cluster Management
+v${project.version}
+
+////
+PDF Generation gives an error if you try to use icons
+////
+ifdef::backend-html5[]
+== Links
+
+=== icon:home[] https://spohnan.github.io/mesos-cluster/[Site]
+
+=== icon:github[] https://github.com/spohnan/mesos-cluster[GitHub]
+
+endif::backend-html5[]
+
+== Overview
+
+== Environment Setup
+
+Each environment requires a some account creation and project configuration to work with your credentials
+
+=== Amazon Web Services
+
+* Create an API key or run from a server with the appropriate instance role
+
+[source, bash]
+----
+# Configure key or run from instance with role
+export AWS_ACCESS_KEY_ID=FOO
+export AWS_SECRET_ACCESS_KEY=BAR
+export AWS_REGION=us-east-1
+----
+
+* Download a copy of the https://raw.githubusercontent.com/ansible/ansible/devel/contrib/inventory/ec2.ini[ec2.ini] configuration
+  file and save it to hosts/aws/ec2.ini
+* Create a new configuration file in vars/ which you'll reference when you run the gluster.sh script
+  ** You can support multiple environments by making more than one config file
+* Most https://github.com/spohnan/mesos-gluster/blob/master/roles/aws-instances/defaults/main.yml[ec2 instance^] and
+https://github.com/spohnan/mesos-gluster/blob/master/roles/aws-disks/defaults/main.yml[ebs disk^] settings have defaults
+and can be overridden in this file, several settings are environment specific and you'll have to set for your account
+
+[source, bash]
+----
+# Example contents of AWS vars/mydomain.yml file values
+ec2_subnet_ids: [ 'subnet-c70dd123' ]
+ec2_security_groups: [ 'ssh-whitelist', 'all-internal' ]
+domain: "mydomain.com"
+ec2_keypair: "mydomain.com"
+----
+
+=== Google Compute Engine
+
+* Create a project in the the Google Developers Console
+* Create a service account and key through the Google Developers Console API section
+* Add an ssh key to the project
+* Rename hosts/gce/gce.ini.example to hosts/gce/gce.ini and fill in the values with your account information
+* Create an environment specific config file like the one described above for aws and populate with your account information
+
+[source, bash]
+----
+# Example contents of GCE vars/mydomain.yml file values
+gce_service_account_email: 13_digit_acct_number-compute@developer.gserviceaccount.com
+gce_pem_file: ~/.ssh/my-account-key.pem
+gce_project_id: my-project-id
+----
+
+== mesos.sh script
+
+This script collects the arguments needed to perform any action against a provider and coordinates the execution of the
+Ansible playbooks. Both multi-step actions that will configure everything in a single commmand and the ability to run or
+re-run individual playbooks are allowed.
+
+The --vars argument is used to specify a local configuration override file you create in the vars/ directory with the
+settings you wish to override for your cluster configuration.
+
+=== Usage Examples
+
+[source, bash]
+----
+# Run the inventory listing for the specified provider
+./mesos.sh --provider gce --action list-inventory
+
+# Run a multi-step action
+./mesos.sh --prefix dev --provider gce --vars mydomain.yml --action build-all
+
+# Run a specific playbook (omit the provider prefix in the name)
+./mesos.sh --prefix dev --provider gce --vars mydomain.yml --action provision
+
+# You can add the --verbose to get extra output from Ansible to assist debugging issues
+./mesos.sh --prefix dev --provider gce --vars mydomain.yml --action configure --verbose
+----
+
+== Version
+
+This documentation was generated for mesos-cluster version ${project.version} from commit ${buildNumber}.
