@@ -1,9 +1,22 @@
 - hosts: "tag_Type_mesos:&tag_Cluster_{{ cluster_prefix }}"
   vars_files:
     - "vars/{{ varfile }}"
-  become: true
-
   tasks:
+
     - name: Upgrade all packages in RedHat-based machines
       when: ansible_os_family == "RedHat"
       yum: name=* state=latest
+      become: true
+
+    - name: Check for reboot hint
+      shell: if [ $(rpm -q kernel | sort -Vr | head -n 1) != kernel-$(uname -r) ]; then echo 'reboot'; fi
+      become: true
+      register: reboot_hint
+
+    - name: Rebooting
+      when: ( reboot_hint.stdout == "reboot" and auto_reboot_allowed ) or ( initial_install_reboot is defined )
+      command: shutdown -r now “kernel update applied”
+      async: 0
+      poll: 0
+      become: true
+      ignore_errors: true
