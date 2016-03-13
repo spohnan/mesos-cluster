@@ -1,0 +1,9 @@
+- name: Cluster information
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_master"
+  tasks:
+
+  - name: Meso master node(s)
+    debug: msg="{{ hostvars[item].ec2_tag_Name }} - {{ hostvars[item].inventory_hostname }}"
+    with_items: "{{ play_hosts }}"
+    tags:
+      - master_info
