@@ -64,6 +64,12 @@ gce_pem_file: ~/.ssh/my-account-key.pem
 gce_project_id: my-project-id
 ----
 
+== Ansible
+
+Being a bit of a Python novice I ran into a number of PATH related issues with Anisible installed from either RPM on my
+Linux machines or Homebrew on my Mac. I got the best results installing the Python Pip installer using the appropriate
+method for either system and then using `pip install --upgrade ansible` to get and keep Ansible up to date.
+
 == mesos.sh script
 
 This script collects the arguments needed to perform any action against a provider and coordinates the execution of the
@@ -80,6 +86,9 @@ settings you wish to override for your cluster configuration.
 # Run the inventory listing for the specified provider
 ./mesos.sh --provider gce --action list-inventory
 
+# Use the default (aws) provider and ping all nodes of the dev mesos cluster
+./mesos.sh --prefix dev --action ping
+
 # Run a multi-step action
 ./mesos.sh --prefix dev --provider gce --vars mydomain.yml --action build-all
 
@@ -89,6 +98,31 @@ settings you wish to override for your cluster configuration.
 # You can add the --verbose to get extra output from Ansible to assist debugging issues
 ./mesos.sh --prefix dev --provider gce --vars mydomain.yml --action configure --verbose
 ----
+
+== Components
+
+=== Infrastructure
+
+Infrastructure components are the bare minimum of serivces needed to be installed to have a running cluster.
+
+[width="50%",options="header"]
+|====
+| Service | Nodes | Description
+| Java | Mesos Master | https://www.oracle.com/java/index.html[Programming language with runtime VM^]
+| Mesos | All | http://mesos.apache.org/documentation/latest/architecture/[Cluster management^]
+| NTP | All | clock synchronization
+| Zookeeper | Mesos Master | https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index[distributed coordination^]
+|====
+
+=== Mesos Master Nodes
+
+As a simplification of the number of component installation variations that could be used Mesos master nodes all run
+the following applications in addtion to the mesos-master service
+
+* Chronos
+* HAProxy
+* Marathon
+* Zookeeper
 
 == Version
 

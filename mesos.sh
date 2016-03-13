@@ -67,5 +67,6 @@ case "${ARGS[action]}" in
 			run_playbook $step
 			list_inventory > /dev/null 2>&1 # Update cache
 		done ;;
+	"ping") ansible -i hosts/"${ARGS[provider]}" "tag_Cluster_${ARGS[prefix]}" -m ping ;;
 	*) run_playbook "${ARGS[action]}" ;; # Anything else should be a playbook
 esac
