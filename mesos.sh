@@ -43,7 +43,7 @@ list_inventory() {
 run_playbook() {
 	[[ ! -z "${ARGS[tags]}" ]] && tags="--tags ${ARGS[tags]}"
 	[[ ! -z "${ARGS[skip-tags]}" ]] && skip_tags="--skip-tags ${ARGS[skip-tags]}"
-	[[ "${ARGS[provider]}" == "build-all" ]] && intial_build="-e initial_install_reboot=true"
+	[[ "${ARGS[action]}" == "build-all" ]] && intial_build="-e initial_install_reboot=true"
 	ansible-playbook ${ARGS[verbose]//true/-vvv} \
 		-i hosts/"${ARGS[provider]}" \
 		-e $CLUSTER \
@@ -62,7 +62,7 @@ run_playbook() {
 case "${ARGS[action]}" in
 	"list-inventory") list_inventory ;;
 	"build-all")
-		STEPS=( "provision" "configure" "update" "info" )
+		STEPS=( "provision" "configure" "info" "update" )
 		for step in "${STEPS[@]}"; do
 			run_playbook $step
 			list_inventory > /dev/null 2>&1 # Update cache
