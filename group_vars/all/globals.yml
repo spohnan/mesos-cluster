@@ -6,7 +6,7 @@ epel_repo: "http://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_
 auto_reboot_allowed: false
 
 # Tool versions used when downloading packages
-mesos_version: "0.27.1"
+mesos_version: "0.27.2"
 marathon_version: "0.15.2"
 java_version: "8"
 
