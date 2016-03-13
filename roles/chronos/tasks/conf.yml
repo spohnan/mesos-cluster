@@ -1,7 +1,7 @@
 ---
 
 - name: create chronos conf directory
-  sudo: yes
+  become: true
   file:
     dest: "{{ chronos_conf_path }}"
     state: directory
@@ -13,7 +13,7 @@
   register: systemd_check
 
 - name: (systemd) configure chronos unit file - requires
-  sudo: yes
+  become: true
   replace:
     dest: "{{ chronos_systemd_unit }}"
     regexp: "{{ item.regexp }}"
@@ -30,13 +30,13 @@
     - chronos
 
 - name: (systemd) configure chronos unit file - pre start
-  sudo: yes
+  become: true
   lineinfile:
     dest: "{{ chronos_systemd_unit }}"
     line: "ExecStartPre={{ item }}"
     insertbefore: "^ExecStart="
     state: present
-  with_items: chronos_systemd_unit_startpre
+  with_items: "{{ chronos_systemd_unit_startpre }}"
   when: systemd_check.stat.exists == true
   notify:
     - restart chronos
@@ -50,7 +50,7 @@
     regexp: 'function load_options_and_log(.*\s(?!function))*'
     replace: "{{ chronos_bin_load_options_override }}\n"
   when: chronos_bin_load_options_override_enabled
-  sudo: yes
+  become: true
   notify:
     - restart chronos
   tags:
@@ -60,9 +60,9 @@
   copy:
     dest: "{{ chronos_conf_path }}/{{ item.key }}"
     content: "{{ item.value }}"
-  with_dict: chronos_conf_options
+  with_dict: "{{ chronos_conf_options }}"
   when: item.value != ""
-  sudo: yes
+  become: true
   notify:
     - restart chronos
   tags:
@@ -73,14 +73,14 @@
     dest: "{{ chronos_sysconfig_path }}"
     line: "{{ item.key }}={{ item.value }}"
     create: yes
-  with_dict: chronos_sysconfig_vars
+  with_dict: "{{ chronos_sysconfig_vars }}"
   when: item.value != ""
-  sudo: yes
+  become: true
   notify:
     - restart chronos
 
 - name: enable chronos service
-  sudo: yes
+  become: true
   service:
     enabled: yes
     name: chronos

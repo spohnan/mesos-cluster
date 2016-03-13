@@ -3,7 +3,7 @@
 - name: Remove Chronos
   hosts: localhost
   connection: local
-  sudo: yes
+  become: true
 
   tasks:
     - service: name=chronos state=stopped enabled=no

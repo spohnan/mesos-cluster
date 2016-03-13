@@ -4,7 +4,7 @@
 - name: Test Playbook - Defaults
   hosts: localhost
   connection: local
-  sudo: yes
+  become: true
   roles:
     - { role: ../../ }
   post_tasks:
@@ -15,7 +15,7 @@
 - name: Test Playbook - No bin override
   hosts: localhost
   connection: local
-  sudo: yes
+  become: true
   vars:
     chronos_bin_load_options_override_enabled: yes
     chronos_conf_options:
@@ -32,7 +32,7 @@
 - name: Test Playbook - No Mesos Requirement
   hosts: localhost
   connection: local
-  sudo: yes
+  become: true
   vars:
     chronos_systemd_require_mesos: no
   roles:
@@ -45,7 +45,7 @@
 - name: Test Playbook - Wait for Zookeeper
   hosts: localhost
   connection: local
-  sudo: yes
+  become: true
   vars:
     chronos_systemd_unit_startpre:
       - "while true; do
