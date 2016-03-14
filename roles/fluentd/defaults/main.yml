@@ -1,0 +1,23 @@
+---
+
+#
+# variables needed to be defined in user's playbook
+#
+
+
+
+
+#
+# user-configurable defaults
+#
+
+tdagent_plugins:
+    - fluent-plugin-multiprocess
+    #- fluent-plugin-elasticsearch
+    #- fluent-plugin-prometheus
+
+
+
+#---- the following vars are handled in tasks/set-role-variables.yml ------
+
+#tdagent_use_service:       True      # use "service" command to start/restart fluentd?

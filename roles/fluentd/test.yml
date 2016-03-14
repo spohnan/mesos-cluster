@@ -1,0 +1,18 @@
+- hosts: all
+  sudo: True
+  tasks:
+    - include: 'tasks/main.yml'
+  handlers:
+    - include: 'handlers/main.yml'
+  vars_files:
+    - 'defaults/main.yml'
+
+  vars:
+    tdagent_plugins:
+      - fluent-plugin-multiprocess
+      - fluent-plugin-anonymizer
+      - fluent-plugin-forest
+      - fluent-plugin-record-reformer
+      #- fluent-plugin-geoip
+      #- fluent-plugin-prometheus
+      #- fluent-plugin-elasticsearch

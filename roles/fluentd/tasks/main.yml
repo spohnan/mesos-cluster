@@ -1,0 +1,61 @@
+---
+# file: tasks/main.yml
+# Top-level installer for Fluentd.
+#
+# @see http://docs.treasuredata.com/articles/td-agent
+#
+
+- name: set role variables, if necessary
+  include: set-role-variables.yml
+
+
+- name: delegate to APT system for installation
+  include: use-apt.yml
+  when: ansible_pkg_mgr == "apt"
+
+- name: delegate to YUM system for installation
+  include: use-yum.yml
+  when: ansible_pkg_mgr == "yum"
+
+
+
+- name: reanme default td-agent.conf
+  command: creates="/etc/td-agent/td-agent.conf.bak" mv /etc/td-agent/td-agent.conf /etc/td-agent/td-agent.conf.bak
+
+
+
+- name: copy new td-agent.conf from role's default
+  copy: src=../files/td-agent.conf  dest=/etc/td-agent/td-agent.conf
+  when: tdagent_conf_copy is not defined and tdagent_conf_template is not defined
+  notify:
+    - restart td-agent
+
+- name: copy new "td-agent.conf" verbatim from main playbook's
+  copy: src={{ playbook_dir }}/{{ tdagent_conf_copy }}  dest=/etc/td-agent/td-agent.conf
+  when: tdagent_conf_copy is defined
+  notify:
+    - restart td-agent
+
+- name: copy (from template) new "td-agent.conf" from main playbook's
+  template: src={{ playbook_dir }}/{{ tdagent_conf_template }}  dest=/etc/td-agent/td-agent.conf
+  when: tdagent_conf_template is defined
+  notify:
+    - restart td-agent
+
+
+
+# GEM installed on:
+#   /opt/td-agent/embedded/lib/ruby/gems/2.1.0/gems/
+- name: install plugins, if any
+  gem: >
+      name={{ item }}
+      executable=/opt/td-agent/embedded/bin/fluent-gem
+      state=latest
+      user_install=no
+  #command: >
+  #    /opt/td-agent/embedded/bin/fluent-gem install
+  #    {{ item }}
+  #    --no-rdoc --no-ri
+  with_items: "{{ tdagent_plugins }}"
+  notify:
+    - restart td-agent

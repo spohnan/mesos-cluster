@@ -1,0 +1,13 @@
+---
+# file: handlers/main.yml
+#
+
+- name: restart td-agent
+  become: true
+  service: name=td-agent state=restarted
+  when: tdagent_use_service|bool
+
+- name: stop td-agent
+  become: true
+  service: name=td-agent state=stopped
+  when: tdagent_use_service|bool
