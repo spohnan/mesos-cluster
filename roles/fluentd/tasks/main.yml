@@ -17,26 +17,22 @@
   include: use-yum.yml
   when: ansible_pkg_mgr == "yum"
 
+#- name: reanme default td-agent.conf.j2
+#  command: creates="/etc/td-agent/td-agent.conf.j2.bak" mv /etc/td-agent/td-agent.conf.j2 /etc/td-agent/td-agent.conf.j2.bak
 
-
-- name: reanme default td-agent.conf
-  command: creates="/etc/td-agent/td-agent.conf.bak" mv /etc/td-agent/td-agent.conf /etc/td-agent/td-agent.conf.bak
-
-
-
-- name: copy new td-agent.conf from role's default
-  copy: src=../files/td-agent.conf  dest=/etc/td-agent/td-agent.conf
+- name: copy new td-agent.conf.j2 from role's default
+  copy: src=../files/td-agent.conf.j2  dest=/etc/td-agent/td-agent.conf.j2
   when: tdagent_conf_copy is not defined and tdagent_conf_template is not defined
   notify:
     - restart td-agent
 
-- name: copy new "td-agent.conf" verbatim from main playbook's
-  copy: src={{ playbook_dir }}/{{ tdagent_conf_copy }}  dest=/etc/td-agent/td-agent.conf
+- name: copy new "td-agent.conf.j2" verbatim from main playbook's
+  copy: src={{ playbook_dir }}/{{ tdagent_conf_copy }}  dest=/etc/td-agent/td-agent.conf.j2
   when: tdagent_conf_copy is defined
   notify:
     - restart td-agent
 
-- name: copy (from template) new "td-agent.conf" from main playbook's
+- name: copy (from template) new "td-agent.conf.j2" from main playbook's
   template: src={{ playbook_dir }}/{{ tdagent_conf_template }}  dest=/etc/td-agent/td-agent.conf
   when: tdagent_conf_template is defined
   notify:

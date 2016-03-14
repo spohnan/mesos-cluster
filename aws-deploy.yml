@@ -16,7 +16,7 @@
     - "vars/{{ varfile }}"
   vars:
     - zookeeper_hostnames: "a1-mesos-master-e7428a:2181"
-    - influx_db_password: "{{ lookup('password', 'deploy/credentials/influxdb length=15') }}"
+    #- influx_db_password: "{{ lookup('password', 'deploy/credentials/influxdb length=15') }}"
   tasks:
 
     - name: Create temp deploy directory
@@ -29,4 +29,4 @@
       template: src=../files/cluster-bookmarks.txt.j2 dest={{ deploy_home }}/cluster-bookmarks.txt mode=400
 
     - name: Install marathon launcher helper script
-      copy: src=../files/marathon.sh dest={{ deploy_home }}/marathon.sh mode=0755
+      copy: src=../files/marathon.sh dest={{ deploy_home }}/marathon.sh mode=0500

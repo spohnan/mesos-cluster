@@ -64,17 +64,6 @@
     with_items: "{{ play_hosts }}"
     tags: use_hosts_file
 
-##
-## Install Java
-##
-#- name: Install Java
-#  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
-#  become: true
-#  vars_files:
-#    - "vars/{{ varfile }}"
-#  roles:
-#    - { role: java, tags: ['install_java'] }
-
 #
 # Configure zookeeper(s)
 #
@@ -103,29 +92,19 @@
   vars_files:
     - "vars/{{ varfile }}"
   vars:
-    - docker_opts: "--log-driver=gelf --log-opt gelf-address=udp://localhost:12201 --storage-opt dm.datadev=/dev/docker-storage/data --storage-opt dm.metadatadev=/dev/docker-storage/metadata"
+    - docker_opts: "--log-driver=fluentd --log-opt fluentd-address=localhost:24224 --storage-opt dm.datadev=/dev/docker-storage/data --storage-opt dm.metadatadev=/dev/docker-storage/metadata"
     - dns_servers: "{% for host in groups['mesos_masters'] %}prepend domain-name-servers {{ hostvars[host].ec2_private_ip_address }};\n{% endfor %}"
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_private_ip_address }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
-#    - logstash_version: "2.2"
-#    - logstash_defaults: |
-#        LS_USER=root
-#        LS_HEAP_SIZE="256m"
-#    - logstash_inputs: |
-#        gelf {
-#          type => docker
-#          port => 12201
-#        }
-#    - logstash_outputs: |
-#        elasticsearch {
-#          hosts => "http://elasticsearch-i.marathon.mesos:31000"
-#        }
-#    - logstash_filters: ""
+    - tdagent_plugins:
+      - fluent-plugin-multiprocess
+      - fluent-plugin-elasticsearch
+    - tdagent_conf_template: "files/td-agent.conf.j2"
   roles:
   - { role: autofs, tags: ['install_common_software', 'autofs'] }
-  - { role: docker-disk, tags: ['install_common_software', 'docker'] }
   - { role: docker, tags: ['install_common_software', 'docker'] }
+  - { role: docker-disk, tags: ['install_common_software', 'docker'] }
+  - { role: fluentd, tags: ['install_common_software', 'fluentd'] }
   - { role: gluster, type: "{{ ec2_tag_Type }}", tags: ['install_common_software', 'gluster'] }
-#  - { role: logstash, tags: ['install_common_software', 'logstash'] }
   tasks:
 
   - name: Start docker
@@ -157,18 +136,6 @@
     tags:
       - install_common_software
       - mesos-dns
-
-#  - name: Ensure logstash config directory is present
-#    file: path=/etc/logstash state=directory
-#    tags:
-#      - install_common_software
-#      - logstash
-#
-#  - name: Create logstash config file
-#    template: src=files/gelf.conf.j2 dest=/etc/logstash/gelf.conf mode=0644
-#    tags:
-#      - install_common_software
-#      - logstash
 
 #
 # Install Mesos master(s)

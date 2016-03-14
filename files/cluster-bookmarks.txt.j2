@@ -5,8 +5,8 @@ Chronos:        http://{{ hostvars[groups['zookeeper_hosts'][0]].ansible_nodenam
 Jenkins:        http://jenkins-master.marathon.mesos:8888
 InfluxDB:       http://influxdb-i.marathon.mesos:8083
 ElasticSearch:  http://elasticsearch-i.marathon.mesos:31100
+Grafana:        http://grafana-i.marathon.mesos:3000
 Kibana:
-Grafana:
 
 CAdvisor:       Running on each node on randomly selected port, use Marathon listing to find links
 

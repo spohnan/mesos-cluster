@@ -33,8 +33,7 @@
       "env": {
         "GRAPHITE_DB": "graphite",
         "GRAPHITE_BINDING": ":2003",
-        "PRE_CREATE_DB": "cadvisor",
-        "INFLUXDB_INIT_PWD": "{{ influx_db_password}}",
+        "PRE_CREATE_DB": "cadvisor"
       },
       "container": {
         "type": "DOCKER",
@@ -74,14 +73,36 @@
           {"containerPath": "/var/run", "hostPath": "/var/run", "mode": "RW"},
           {"containerPath": "/sys", "hostPath": "/sys", "mode": "RO"},
           {"containerPath": "/var/lib/docker", "hostPath": "/var/lib/docker/", "mode": "RO"}
-        ],
-        "args": [
-          "-storage_driver", "influxdb",
-          "-storage_driver_db", "cadvisor",
-          "-storage_driver_host", "influxdb-i.marathon.mesos:8086",
-          "-storage_driver_user", "root",
-          "-storage_driver_password", "root"
         ]
+      },
+      "args": [
+        "-storage_driver", "influxdb",
+        "-storage_driver_db", "cadvisor",
+        "-storage_driver_host", "influxdb-i.marathon.mesos:8086"
+      ]
+    }
+    ,
+    {
+      "id": "/i/grafana",
+      "dependencies": ["/i/influxdb"],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 100,
+      "labels": { "billing": "infrastructure" },
+      "healthChecks": [{"path": "/", "portIndex": 0}],
+      "env": {
+        "HTTP_USER": "admin",
+        "HTTP_PASS": "admin"
+      },
+      "container": {
+        "type": "DOCKER",
+        "volumes": [
+          {"containerPath": "/var/lib/grafana", "hostPath": "/mnt/docker/graphana", "mode": "RW"}
+        ],
+        "docker": {
+          "image": "grafana/grafana:2.6.0",
+          "network": "HOST"
+        }
       }
     }
   ]
