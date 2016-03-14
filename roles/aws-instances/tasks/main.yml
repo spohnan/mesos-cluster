@@ -10,6 +10,7 @@
     group: "{{ ec2_security_groups }}"
     instance_type: "{{ ec2_server_instance_type }}"
     image: "{{ ec2_image }}"
+    instance_profile_name: "{{ ec2_iam_role }}"
     vpc_subnet_id: "{{ ec2_subnet_ids|random }}"
     region: "{{ ec2_region }}"
     wait: true
