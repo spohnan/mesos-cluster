@@ -6,6 +6,8 @@
   become: yes
   vars_files:
     - "vars/{{ varfile }}"
+  roles:
+    - { role: ntp, tags: ['ntp'] }
   tasks:
 
   - name: Update the hostname to match the Name tag
@@ -62,16 +64,16 @@
     with_items: "{{ play_hosts }}"
     tags: use_hosts_file
 
-#
-# Install Java
-#
-- name: Install Java
-  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
-  become: true
-  vars_files:
-    - "vars/{{ varfile }}"
-  roles:
-    - { role: java, tags: ['install_java'] }
+##
+## Install Java
+##
+#- name: Install Java
+#  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
+#  become: true
+#  vars_files:
+#    - "vars/{{ varfile }}"
+#  roles:
+#    - { role: java, tags: ['install_java'] }
 
 #
 # Configure zookeeper(s)
@@ -84,12 +86,13 @@
   vars:
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
   roles:
-    - { role: zookeeper, tags: ['configure_zookeeper'] }
+    - { role: java, tags: ['zookeeper', 'java'] }
+    - { role: zookeeper, tags: ['zookeeper'] }
   tasks:
 
     - name: Start zookeeper
       service: name=zookeeper state=started enabled=yes
-      tags: configure_zookeeper
+      tags: zookeeper
 
 #
 # Install all common software on each cluster node
@@ -103,26 +106,26 @@
     - docker_opts: "--log-driver=gelf --log-opt gelf-address=udp://localhost:12201 --storage-opt dm.datadev=/dev/docker-storage/data --storage-opt dm.metadatadev=/dev/docker-storage/metadata"
     - dns_servers: "{% for host in groups['mesos_masters'] %}prepend domain-name-servers {{ hostvars[host].ec2_private_ip_address }};\n{% endfor %}"
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_private_ip_address }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
-    - logstash_version: "2.2"
-    - logstash_defaults: |
-        LS_USER=root
-        LS_HEAP_SIZE="256m"
-    - logstash_inputs: |
-        gelf {
-          type => docker
-          port => 12201
-        }
-    - logstash_outputs: |
-        elasticsearch {
-          hosts => "http://elasticsearch-i.marathon.mesos:31000"
-        }
-    - logstash_filters: ""
+#    - logstash_version: "2.2"
+#    - logstash_defaults: |
+#        LS_USER=root
+#        LS_HEAP_SIZE="256m"
+#    - logstash_inputs: |
+#        gelf {
+#          type => docker
+#          port => 12201
+#        }
+#    - logstash_outputs: |
+#        elasticsearch {
+#          hosts => "http://elasticsearch-i.marathon.mesos:31000"
+#        }
+#    - logstash_filters: ""
   roles:
   - { role: autofs, tags: ['install_common_software', 'autofs'] }
   - { role: docker-disk, tags: ['install_common_software', 'docker'] }
   - { role: docker, tags: ['install_common_software', 'docker'] }
   - { role: gluster, type: "{{ ec2_tag_Type }}", tags: ['install_common_software', 'gluster'] }
-  - { role: logstash, tags: ['install_common_software', 'logstash'] }
+#  - { role: logstash, tags: ['install_common_software', 'logstash'] }
   tasks:
 
   - name: Start docker
@@ -155,17 +158,17 @@
       - install_common_software
       - mesos-dns
 
-  - name: Ensure logstash config directory is present
-    file: path=/etc/logstash state=directory
-    tags:
-      - install_common_software
-      - logstash
-
-  - name: Create logstash config file
-    template: src=files/gelf.conf.j2 dest=/etc/logstash/gelf.conf mode=0644
-    tags:
-      - install_common_software
-      - logstash
+#  - name: Ensure logstash config directory is present
+#    file: path=/etc/logstash state=directory
+#    tags:
+#      - install_common_software
+#      - logstash
+#
+#  - name: Create logstash config file
+#    template: src=files/gelf.conf.j2 dest=/etc/logstash/gelf.conf mode=0644
+#    tags:
+#      - install_common_software
+#      - logstash
 
 #
 # Install Mesos master(s)
@@ -203,24 +206,6 @@
       tags:
         - install_mesos_masters
         - marathon
-
-    - name: Install marathon launcher helper script
-      copy: src=../files/marathon.sh dest=/etc/profile.d/marathon.sh mode=0644
-      tags:
-        - install_mesos_masters
-        - marathon
-
-    - name: Install marathon infrastructure launch script
-      template: src=../files/infrastructure.json.j2 dest={{ marathon_launch_config_home}}/infrastructure.json mode=0644
-      tags:
-        - install_mesos_masters
-        - marathon
-
-    - name: Install cluster bookmarks file
-      template: src=../files/cluster-bookmarks.txt.j2 dest={{ marathon_launch_config_home}}/cluster-bookmarks.txt mode=0644
-      tags:
-        - install_mesos_masters
-        - bookmarks
 
 #
 # Install Mesos workers(s)

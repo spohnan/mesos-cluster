@@ -1,15 +1,13 @@
 #!/usr/bin/env bash
 
+MARATHON_HOST="${1-localhost}"
+
 marathon_launch() {
-  echo "running marathon launcher helper script:"
-  echo "curl -X POST http://localhost:8080/v2/apps -d @$1 -H 'Content-type: application/json'"
-  curl -X POST http://localhost:8080/v2/apps -d @$1 -H 'Content-type: application/json'
+  curl -X POST --socks5-hostname localhost "http://${MARATHON_HOST}:8080/v2/apps" -d @$2 -H 'Content-type: application/json'
 }
 
 marathon_launch_group() {
-  echo "running marathon launcher helper script:"
-  echo "curl -X POST http://localhost:8080/v2/groups -d @$1 -H 'Content-type: application/json'"
-  curl -X POST http://localhost:8080/v2/groups -d @$1 -H 'Content-type: application/json'
+  curl -X POST --socks5-hostname localhost "http://${MARATHON_HOST}:8080/v2/groups" -d @$2 -H 'Content-type: application/json'
 }
 
 alias ml='marathon_launch'

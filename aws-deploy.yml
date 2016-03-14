@@ -1,0 +1,32 @@
+- name: Identify master node(s), update name and tag with Role=master
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_master"
+  become: yes
+  vars_files:
+    - "vars/{{ varfile }}"
+  tasks:
+
+  - add_host: name="{{ item.1 }}" groups=mesos_masters,zookeeper_hosts zoo_id="{{ item.0 }}"
+    with_indexed_items: "{{ play_hosts }}"
+    tags: always
+
+- name: Create deployment artifacts
+  hosts: localhost
+  connection: local
+  vars_files:
+    - "vars/{{ varfile }}"
+  vars:
+    - zookeeper_hostnames: "a1-mesos-master-e7428a:2181"
+    - influx_db_password: "{{ lookup('password', 'deploy/credentials/influxdb length=15') }}"
+  tasks:
+
+    - name: Create temp deploy directory
+      file: path="{{ deploy_home }}" state=directory
+
+    - name: Install marathon infrastructure launch script
+      template: src=../files/infrastructure.json.j2 dest={{ deploy_home }}/infrastructure.json mode=400
+
+    - name: Install marathon infrastructure launch script
+      template: src=../files/cluster-bookmarks.txt.j2 dest={{ deploy_home }}/cluster-bookmarks.txt mode=400
+
+    - name: Install marathon launcher helper script
+      copy: src=../files/marathon.sh dest={{ deploy_home }}/marathon.sh mode=0755

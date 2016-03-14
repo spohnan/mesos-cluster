@@ -27,3 +27,6 @@ elasticsearch_cluster_name: DemoCluster
 # Gluster file system mount information (optional)
 gluster_mount_dir: /mnt
 gluster_mount_info: ""
+
+# The directory into which the service credentials and Marathon launch JSON file will be written
+deploy_home: deploy

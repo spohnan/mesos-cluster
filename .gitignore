@@ -4,6 +4,7 @@
 
 # Build artifacts
 docs/target/
+deploy/
 
 # Other random cruft
 .DS_Store
