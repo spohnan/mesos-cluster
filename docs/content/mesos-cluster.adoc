@@ -103,26 +103,21 @@ settings you wish to override for your cluster configuration.
 
 === Infrastructure
 
-Infrastructure components are the bare minimum of serivces needed to be installed to have a running cluster.
+Infrastructure components are the default set of services to be installed on a cluster.
 
 [width="50%",options="header"]
 |====
 | Service | Nodes | Description
-| Java | Mesos Master | https://www.oracle.com/java/index.html[Programming language with runtime VM^]
+| Chronos | Mesos Master(s) | http://mesos.github.io/chronos/[Distributed scheduler^]
+| Docker | All | https://www.docker.com/[Containerization^]
+| Gluster | All | https://www.gluster.org/[Distributed file system (client)^]
+| HAProxy | Mesos Master(s) | http://www.haproxy.org/[Load Balancer^]
+| Java | Mesos Master(s) | https://www.oracle.com/java/index.html[Programming language with runtime VM^]
+| Marathon | Mesos Master(s) | https://mesosphere.github.io/marathon/[Cluster Init System^]
 | Mesos | All | http://mesos.apache.org/documentation/latest/architecture/[Cluster management^]
 | NTP | All | clock synchronization
-| Zookeeper | Mesos Master | https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index[distributed coordination^]
+| Zookeeper | Mesos Master(s) | https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index[distributed coordination^]
 |====
-
-=== Mesos Master Nodes
-
-As a simplification of the number of component installation variations that could be used Mesos master nodes all run
-the following applications in addtion to the mesos-master service
-
-* Chronos
-* HAProxy
-* Marathon
-* Zookeeper
 
 == Version
 
