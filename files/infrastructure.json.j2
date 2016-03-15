@@ -9,7 +9,7 @@
       "constraints": [["hostname", "UNIQUE"]],
       "acceptedResourceRoles": ["master_node"],
       "labels": { "billing": "infrastructure" },
-      "healthChecks": [ { "path": "/v1/version", "port": 8123} ],
+      "healthChecks": [{ "path": "/v1/version", "port": 8123, "timeoutSeconds": 300, "intervalSeconds": 20 }],
       "container": {
         "type": "DOCKER",
         "docker": {
@@ -29,7 +29,7 @@
       "cpus": 0.2,
       "mem": 200,
       "labels": { "billing": "infrastructure" },
-      "healthChecks": [ { "path": "/", "port": 8083} ],
+      "healthChecks": [{ "path": "/", "port": 8083,"timeoutSeconds": 300, "intervalSeconds": 20 }],
       "env": {
         "GRAPHITE_DB": "graphite",
         "GRAPHITE_BINDING": ":2003",
@@ -55,7 +55,7 @@
       "mem": 100,
       "constraints": [["hostname", "UNIQUE"]],
       "acceptedResourceRoles": ["*", "master_node"],
-      "healthChecks": [{"path": "/", "portIndex": 0}],
+      "healthChecks": [{ "path": "/", "portIndex": 0, "timeoutSeconds": 300, "intervalSeconds": 20 }],
       "labels": { "billing": "infrastructure" },
       "container": {
         "type": "DOCKER",
@@ -89,7 +89,7 @@
       "cpus": 0.2,
       "mem": 100,
       "labels": { "billing": "infrastructure" },
-      "healthChecks": [{"path": "/", "portIndex": 0}],
+      "healthChecks": [{ "path": "/login", "port": 3000, "timeoutSeconds": 300, "intervalSeconds": 20 }],
       "env": {
         "HTTP_USER": "admin",
         "HTTP_PASS": "admin"
@@ -97,12 +97,83 @@
       "container": {
         "type": "DOCKER",
         "volumes": [
-          {"containerPath": "/var/lib/grafana", "hostPath": "/mnt/docker/graphana", "mode": "RW"}
+          {"containerPath": "/var/lib/grafana", "hostPath": "/mnt/docker/grafana", "mode": "RW"}
         ],
         "docker": {
           "image": "grafana/grafana:2.6.0",
           "network": "HOST"
         }
+      }
+    }
+    ,
+    {
+      "id": "/i/elasticsearch",
+      "dependencies": [ "/i/mesos-dns", "/i/influxdb" ],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 512,
+      "labels": { "billing": "infrastructure" },
+      "healthChecks": [{ "path": "/", "port": 31100, "timeoutSeconds": 300, "intervalSeconds": 20 }],
+      "container": {
+        "docker": {
+          "image": "mesos/elasticsearch-scheduler:1.0.0",
+          "network": "HOST"
+        },
+        "volumes": [ {"containerPath": "/etc/hosts", "hostPath": "/etc/hosts", "mode": "RO"} ]
+      },
+      "env": { "JAVA_OPTS": "-Xms128m -Xmx256m" },
+      "args": [
+        "--zookeeperMesosUrl", "zk://{{ zookeeper_hostnames }}/mesos",
+        "--elasticsearchClusterName", "{{ elasticsearch_cluster_name }}",
+        "--elasticsearchNodes", "{{ server_count - mesos_master_count }}",
+        "--elasticsearchCpu", "0.2",
+        "--elasticsearchRam", "512",
+        "--elasticsearchDisk", "5000",
+        "--dataDir", "/mnt/docker/elasticsearch"
+      ]
+    }
+    ,
+    {
+      "id": "/i/kibana",
+      "dependencies": [ "/i/elasticsearch" ],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 512.0,
+      "labels": { "billing": "infrastructure" },
+      "healthChecks": [{ "path": "/", "port": 5601, "timeoutSeconds": 300, "intervalSeconds": 20 }],
+      "container": {
+        "docker": {
+          "image": "kibana:4.3",
+          "network": "HOST"
+        }
+      },
+      "env": {
+        "ELASTICSEARCH_URL": "http://elasticsearch-i.marathon.mesos:31000"
+      }
+    }
+    ,
+    {
+      "id": "/i/jenkins-master",
+      "dependencies": [ "/i/mesos-dns" ],
+      "instances": 1,
+      "cpus": 0.2,
+      "mem": 2048,
+      "labels": { "billing": "infrastructure" },
+      "healthChecks": [ { "path": "/", "port": 8888 } ],
+      "container": {
+        "type": "DOCKER",
+        "docker": {
+          "image": "spohnan/jenkins-mesos",
+          "network": "HOST",
+          "forcePullImage": true
+        },
+        "volumes": [
+          { "containerPath": "/var/lib/jenkins", "hostPath": "/mnt/docker/jenkins", "mode": "RW" }
+        ]
+      },
+      "env": {
+       "JENKINS_JAVA_OPTIONS": "-Dhudson.slaves.NodeProvisioner.MARGIN=40 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.75 -Xms512m -Xmx2000m -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York",
+       "JENKINS_CMDLINE_OPTIONS": "--httpPort=8888"
       }
     }
   ]

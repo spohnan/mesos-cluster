@@ -5,11 +5,23 @@
 </source>
 
 <match docker.*>
-  @type s3
-  s3_bucket {{ fluentd_s3_bucket }}
-  buffer_path /var/log/td-agent/s3
-  time_slice_format %Y%m%d%H
-  time_slice_wait 10m
-  utc
-  buffer_chunk_limit 256m
+  type copy
+  <store>
+      type elasticsearch
+      host http://elasticsearch-i.marathon.mesos
+      port 31000
+      include_tag_key true
+      tag_key @log_name
+      logstash_format true
+      flush_interval 10s
+  </store>
+  <store>
+      type s3
+      s3_bucket {{ fluentd_s3_bucket }}
+      buffer_path /var/log/td-agent/s3
+      time_slice_format %Y%m%d%H
+      time_slice_wait 10m
+      utc
+      buffer_chunk_limit 256m
+  </store>
 </match>

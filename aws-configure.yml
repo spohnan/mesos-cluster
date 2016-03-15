@@ -149,7 +149,7 @@
   vars:
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
   roles:
-    - { role: 'mesos', mesos_install_mode: "master-slave", "mesos_default_role": "master_node", tags: ['install_mesos_masters', 'mesos'] }
+    - { role: 'mesos', mesos_install_mode: "master-slave", "mesos_default_role": "master_node", "mesos_quorum": "{{ ((mesos_master_count / 2) + 1)|int }}", tags: ['install_mesos_masters', 'mesos'] }
     - { role: 'marathon', marathon_hostname: "{{ ec2_tag_Name }}.{{ domain }}", "mesos_role": "master_node", tags: ['install_mesos_masters', 'marathon', 'haproxy'] }
     - { role: 'chronos', chronos_zk_connect: "zk://{{ zookeeper_hostnames }}/{{chronos_zk_chroot}}", tags: ['install_mesos_masters', 'chronos'] }
   pre_tasks:
@@ -185,4 +185,10 @@
   vars:
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
   roles:
-    - { role: 'mesos', mesos_install_mode: "slave", tags: ['install_mesos_workers'] }
+    - { role: 'mesos', mesos_install_mode: "slave", tags: ['mesos_workers'] }
+  tasks:
+
+    - name: Ensure mesos-master service is not running
+      service: name=mesos-master state=stopped enabled=no
+      tags:
+        - mesos_workers

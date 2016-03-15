@@ -15,8 +15,7 @@
   vars_files:
     - "vars/{{ varfile }}"
   vars:
-    - zookeeper_hostnames: "a1-mesos-master-e7428a:2181"
-    #- influx_db_password: "{{ lookup('password', 'deploy/credentials/influxdb length=15') }}"
+    - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_private_ip_address }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
   tasks:
 
     - name: Create temp deploy directory
