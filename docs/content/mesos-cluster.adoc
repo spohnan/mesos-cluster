@@ -111,6 +111,30 @@ settings you wish to override for your cluster configuration.
 ./mesos.sh --prefix dev --vars mydomain.yml --action info
 ----
 
+== Quick Start
+
+. Configure your cloud provider account and other settings. example: vars/my-domain.yml
+. Optionally create a https://github.com/spohnan/gluster-ansible[storage cluster] to support persistent container storage
+* If you've created a storage cluster there are two settings you'll need to update in your settings file, example shown below
+. Provision and configure Mesos cluster with a single command
+* `./mesos.sh --prefix dev --vars mydomain.yml --action build-all`
+. Check to ensure all nodes are available after intial reboot
+* `./mesos.sh --prefix dev --vars mydomain.yml --action ping`
+. Connect via ssh to a mesos cluster node and create a SOCKS proxy for your browser
+* `./mesos.sh --prefix dev --vars mydomain.yml --action info` (will return all available mesos master nodes)
+* `ssh -D 1080 54.88.123.123` (pick one of the mesos masters)
+. Run the deploy command to create the marathon deployment script for your cluster via a template
+. Use the marathon launch script to deploy all the infrastructure containers
+* `deploy/marathon.sh --marathon dev-mesos-master-4b16d2 --socks 1080 --config deploy/infrastructure.json`
+. Configure your browser to use your socks proxy port and browse to a link in `deploy/cluster-bookmarks.txt`
+
+.Storage cluster environment settings example
+[source, bash]
+----
+gluster_mount_dir: /mnt/docker
+gluster_mount_info: "/mnt/docker -fstype=glusterfs,rw dev-storage-6ac640.ec2.internal:/gv0"
+----
+
 == Components
 
 === Infrastructure
