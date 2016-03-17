@@ -113,6 +113,14 @@
       - install_common_software
       - docker
 
+  - name: Install jq
+    yum: name=jq state=latest
+    tags: install_common_software
+
+  - name: Install zip
+    yum: name=zip state=latest
+    tags: install_common_software
+
   # If this is your initial install you'll need at least a network restart to get this into /etc/resolv.conf
   # To pick up all the other system settings and possible RPM updates you'll want to reboot once before using
   # Note: The config file is saved to each node as if not bound to the local interface it would use IPv6
@@ -149,21 +157,21 @@
   vars:
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
   roles:
-    - { role: 'mesos', mesos_install_mode: "master-slave", "mesos_default_role": "master_node", "mesos_quorum": "{{ ((mesos_master_count / 2) + 1)|int }}", tags: ['install_mesos_masters', 'mesos'] }
-    - { role: 'marathon', marathon_hostname: "{{ ec2_tag_Name }}.{{ domain }}", "mesos_role": "master_node", tags: ['install_mesos_masters', 'marathon', 'haproxy'] }
-    - { role: 'chronos', chronos_zk_connect: "zk://{{ zookeeper_hostnames }}/{{chronos_zk_chroot}}", tags: ['install_mesos_masters', 'chronos'] }
+    - { role: 'mesos', mesos_install_mode: "master-slave", "mesos_default_role": "master_node", "mesos_quorum": "{{ ((mesos_master_count / 2) + 1)|int }}", tags: ['mesos_masters', 'mesos'] }
+    - { role: 'marathon', marathon_hostname: "{{ ec2_tag_Name }}.{{ domain }}", "mesos_role": "master_node", tags: ['mesos_masters', 'marathon', 'haproxy'] }
+    - { role: 'chronos', chronos_zk_connect: "zk://{{ zookeeper_hostnames }}/{{chronos_zk_chroot}}", tags: ['mesos_masters', 'chronos'] }
   pre_tasks:
 
     - name: Install HAProxy
       yum: name=haproxy state=latest
       tags:
-        - install_mesos_masters
+        - mesos_masters
         - haproxy
 
     - name: Start HAProxy
       service: name=haproxy state=started enabled=yes
       tags:
-        - install_mesos_masters
+        - mesos_masters
         - haproxy
 
   tasks:

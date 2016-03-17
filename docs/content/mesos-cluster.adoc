@@ -123,7 +123,6 @@ settings you wish to override for your cluster configuration.
 . Connect via ssh to a mesos cluster node and create a SOCKS proxy for your browser
 * `./mesos.sh --prefix dev --vars mydomain.yml --action info` (will return all available mesos master nodes)
 * `ssh -D 1080 54.88.123.123` (pick one of the mesos masters)
-. Run the deploy command to create the marathon deployment script for your cluster via a template
 . Use the marathon launch script to deploy all the infrastructure containers
 * `deploy/marathon.sh --marathon dev-mesos-master-4b16d2 --socks 1080 --config deploy/infrastructure.json`
 . Configure your browser to use your socks proxy port and browse to a link in `deploy/cluster-bookmarks.txt`
@@ -144,13 +143,21 @@ Infrastructure components are the default set of services to be installed on a c
 [width="50%",options="header"]
 |====
 | Service | Nodes | Description
+| CAdvisor | Containers | https://github.com/google/cadvisor[Container Resource Utilization Metrics^]
 | Chronos | Mesos Master(s) | http://mesos.github.io/chronos/[Distributed scheduler^]
 | Docker | All | https://www.docker.com/[Containerization^]
+| Elasticsearch | Containers | http://mesos-elasticsearch.readthedocs.org/en/latest/[Log Data Search^]
+| FluentD | All | http://www.fluentd.org/[Log collection^]
 | Gluster | All | https://www.gluster.org/[Distributed file system (client)^]
+| Grafana | Container | http://grafana.org/[Time Series Data Visualization^]
 | HAProxy | Mesos Master(s) | http://www.haproxy.org/[Load Balancer^]
+| InfluxDB | Container | https://influxdata.com/[Time Series Database^]
 | Java | Mesos Master(s) | https://www.oracle.com/java/index.html[Programming language with runtime VM^]
+| Jenkins | Container | https://jenkins-ci.org/[Continuous Integration^]
+| Kibana | Container | https://www.elastic.co/products/kibana[Log Data Visualization^]
 | Marathon | Mesos Master(s) | https://mesosphere.github.io/marathon/[Cluster Init System^]
 | Mesos | All | http://mesos.apache.org/documentation/latest/architecture/[Cluster management^]
+| Mesos DNS | Mesos Master(s) | https://mesosphere.github.io/mesos-dns/[DNS for Containers^]
 | NTP | All | clock synchronization
 | Zookeeper | Mesos Master(s) | https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index[distributed coordination^]
 |====
