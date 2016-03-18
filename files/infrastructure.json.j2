@@ -172,8 +172,13 @@
         ]
       },
       "env": {
-       "JENKINS_JAVA_OPTIONS": "-Dhudson.slaves.NodeProvisioner.MARGIN=40 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.75 -Xms512m -Xmx2000m -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York",
-       "JENKINS_CMDLINE_OPTIONS": "--httpPort=8888"
+        "HOST": "jenkins-master-i.marathon.mesos",
+        "JENKINS_JAVA_OPTIONS": "-Dhudson.slaves.NodeProvisioner.MARGIN=40 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.75 -Xms512m -Xmx2000m -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York",
+        "JENKINS_CMDLINE_OPTIONS": "--httpPort=8888",
+        "JENKINS_PORT": "8888",
+        "JENKINS_HOME": "/var/lib/jenkins",
+        "JENKINS_FRAMEWORK_NAME": "Jenkins Scheduler",
+        "JENKINS_MESOS_MASTER": "zk://{{ zookeeper_hostnames }}/mesos"
       }
     }
   ]
