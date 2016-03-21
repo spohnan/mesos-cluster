@@ -140,7 +140,7 @@ gluster_mount_info: "/mnt/docker -fstype=glusterfs,rw dev-storage-6ac640.ec2.int
 
 Infrastructure components are the default set of services to be installed on a cluster.
 
-[width="50%",options="header"]
+[options="header"]
 |====
 | Service | Nodes | Description
 | CAdvisor | Containers | https://github.com/google/cadvisor[Container Resource Utilization Metrics^]
@@ -158,8 +158,8 @@ Infrastructure components are the default set of services to be installed on a c
 | Marathon | Mesos Master(s) | https://mesosphere.github.io/marathon/[Cluster Init System^]
 | Mesos | All | http://mesos.apache.org/documentation/latest/architecture/[Cluster management^]
 | Mesos DNS | Mesos Master(s) | https://mesosphere.github.io/mesos-dns/[DNS for Containers^]
-| NTP | All | clock synchronization
-| Zookeeper | Mesos Master(s) | https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index[distributed coordination^]
+| NTP | All | Clock synchronization
+| Zookeeper | Mesos Master(s) | https://cwiki.apache.org/confluence/display/ZOOKEEPER/Index[Coordination service^]
 |====
 
 == Version
