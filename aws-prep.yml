@@ -1,0 +1,12 @@
+#
+# Prepare systems for configuration
+#
+- name: Prepare systems for configuration
+  hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
+  become: yes
+  vars_files:
+    - "vars/{{ varfile }}"
+  tasks:
+
+  - name: Remove require tty
+    lineinfile: regexp="^\s+\w+\s+requiretty" dest=/etc/sudoers state=absent
