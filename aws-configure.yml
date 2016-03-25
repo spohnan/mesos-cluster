@@ -190,7 +190,7 @@
 #
 # Install Mesos workers(s)
 #
-- name: Install Mesos master(s)
+- name: Install Mesos workers
   hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_worker"
   become: true
   vars_files:
