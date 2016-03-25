@@ -1,0 +1,12 @@
+- name: Deploy Jenkins Job - Create job directory
+  file: path="{{ gluster_mount_dir }}/jenkins/jobs/{{ job }}" state=directory
+  tags: deploy-job
+
+- name: Deploy Jenkins Job - Copy config file
+  copy: src="files/jenkins-jobs/{{ job }}.xml" dest="{{ gluster_mount_dir }}/jenkins/jobs/{{ job }}/config.xml" mode=0644
+  with_items: "{{ play_hosts[0] }}"
+  tags: deploy-job
+
+- name: Reload Jenkins Config
+  command: curl -XPOST http://jenkins-master-i.marathon.mesos:8888/reload warn=false
+  tags: deploy-job

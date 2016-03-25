@@ -8,6 +8,7 @@
 # 		--tags [ comma separated task tags ]      # optional
 # 		--skip-tags [ comma separated task tags ] # optional
 #		--verbose                                 # optionally run ansible with -vvv
+#       --job [job name]                          # used with jenkins-job action to deploy a job
 
 # Parse arguments
 declare -A ARGS
@@ -41,6 +42,7 @@ list_inventory() {
 }
 
 run_playbook() {
+    [[ ! -z "${ARGS[job]}" ]] && job="-e job=${ARGS[job]}"
 	[[ ! -z "${ARGS[tags]}" ]] && tags="--tags ${ARGS[tags]}"
 	[[ ! -z "${ARGS[skip-tags]}" ]] && skip_tags="--skip-tags ${ARGS[skip-tags]}"
 	[[ "${ARGS[action]}" == "build-all" ]] && intial_build="-e initial_install_reboot=true"
@@ -51,6 +53,7 @@ run_playbook() {
 		-e "cluster_prefix=${ARGS[prefix]}" \
 		-e "pipelining=${pipeline}" \
 		${intial_build} \
+		${job} \
 		"${ARGS[provider]}-${1}.yml" \
 		${tags} ${skip_tags} \
 		 --extra-vars="varfile=${ARGS[vars]}"

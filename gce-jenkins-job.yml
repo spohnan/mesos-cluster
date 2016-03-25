@@ -1,0 +1,7 @@
+- name: Jenkins Job Deployment
+  hosts: "tag_type-mesos:&tag_cluster-{{ cluster_prefix }}:&tag_role-master"
+  become: true
+  vars_files:
+      - "vars/{{ varfile }}"
+  roles:
+    - { name: 'jenkins-job', tags: [ 'deploy-job' ] }
