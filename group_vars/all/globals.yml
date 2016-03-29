@@ -1,13 +1,13 @@
 # Package repos
-mesosphere_yum_repo: "http://repos.mesosphere.com/el/{{ ansible_distribution_major_version }}/noarch/RPMS/mesosphere-el-repo-7-2.noarch.rpm"
+mesosphere_yum_repo: "http://repos.mesosphere.com/el/{{ ansible_distribution_major_version }}/noarch/RPMS/mesosphere-el-repo-7-3.noarch.rpm"
 epel_repo: "http://dl.fedoraproject.org/pub/epel/epel-release-latest-{{ ansible_distribution_major_version }}.noarch.rpm"
 
 # Kernel update can trigger an auto reboot if allowed
 auto_reboot_allowed: false
 
 # Tool versions used when downloading packages
-mesos_version: "0.27.2"
-marathon_version: "0.15.2"
+mesos_version: "0.28"
+marathon_version: "15.3"
 java_version: "8"
 
 # Mesos cluster config defaults

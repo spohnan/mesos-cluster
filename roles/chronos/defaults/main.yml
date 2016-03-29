@@ -99,4 +99,5 @@ chronos_sysconfig_vars:
 # Location where HAProxy scripts are installed, e.g. "/usr/local/bin"
 haproxy_script_location: ''
 
-mesosphere_repo: "http://repos.mesosphere.com/el/{{ os_version_major }}/noarch/RPMS/{{ mesosphere_releases[os_version_major] }}"
+#mesosphere_repo: "http://repos.mesosphere.com/el/{{ os_version_major }}/noarch/RPMS/{{ mesosphere_releases[os_version_major] }}"
+mesosphere_repo: "{{ mesosphere_yum_repo }}"

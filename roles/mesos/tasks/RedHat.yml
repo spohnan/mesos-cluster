@@ -13,5 +13,5 @@
     - unzip
     - libselinux-python 
     - python-setuptools
-    - mesos-{{mesos_version}}
+    - mesos
     

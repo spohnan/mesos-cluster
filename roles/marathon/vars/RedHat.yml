@@ -1,7 +1,5 @@
-os_version: "{{ ansible_distribution_version }}"
-os_version_major: "{{ os_version | regex_replace('^([0-9]+)[^0-9]*.*', '\\\\1') }}"
 
 mesosphere_releases:
   '6': 'mesosphere-el-repo-6-3.noarch.rpm'
-  '7': 'mesosphere-el-repo-7-1.noarch.rpm'
+  '7': 'mesosphere-el-repo-7-3.noarch.rpm'
 

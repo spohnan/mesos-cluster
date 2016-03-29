@@ -108,13 +108,11 @@
   - name: Create mount directory if specified
     file: path="{{ gluster_mount_dir }}" state=directory
     when: gluster_mount_dir is defined
-    tags:
-      - mount_gluster
+    tags: gluster
 
   - name: Update /etc/fstab file
     lineinfile: dest=/etc/fstab line="{{ gluster_mount_info }}" state=present
-    tags:
-      - mount_gluster
+    tags: gluster
 
   - name: Start docker
     service: name=docker state=started enabled=yes
@@ -184,7 +182,7 @@
     - name: Start marathon
       service: name=marathon state=started enabled=yes
       tags:
-        - install_mesos_masters
+        - mesos_masters
         - marathon
 
 #
