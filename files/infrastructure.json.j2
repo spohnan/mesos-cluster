@@ -27,7 +27,7 @@
       "id": "/i/influxdb",
       "instances": 1,
       "cpus": 0.2,
-      "mem": 200,
+      "mem": 1024,
       "labels": { "billing": "infrastructure" },
       "healthChecks": [{ "path": "/", "port": 8083,"timeoutSeconds": 300, "intervalSeconds": 20 }],
       "env": {
@@ -52,7 +52,7 @@
       "dependencies": ["/i/influxdb", "/i/mesos-dns"],
       "instances": {{ server_count }},
       "cpus": 0.2,
-      "mem": 100,
+      "mem": 256,
       "constraints": [["hostname", "UNIQUE"]],
       "acceptedResourceRoles": ["*", "master_node"],
       "healthChecks": [{ "path": "/", "portIndex": 0, "timeoutSeconds": 300, "intervalSeconds": 20 }],
@@ -116,7 +116,7 @@
       "healthChecks": [{ "path": "/", "port": 31100, "timeoutSeconds": 300, "intervalSeconds": 20 }],
       "container": {
         "docker": {
-          "image": "mesos/elasticsearch-scheduler:1.0.0",
+          "image": "mesos/elasticsearch-scheduler:1.0.1",
           "network": "HOST"
         },
         "volumes": [ {"containerPath": "/etc/hosts", "hostPath": "/etc/hosts", "mode": "RO"} ]
@@ -127,8 +127,8 @@
         "--elasticsearchClusterName", "{{ elasticsearch_cluster_name }}",
         "--elasticsearchNodes", "{{ server_count - mesos_master_count }}",
         "--elasticsearchCpu", "0.2",
-        "--elasticsearchRam", "512",
-        "--elasticsearchDisk", "5000",
+        "--elasticsearchRam", "2048",
+        "--elasticsearchDisk", "4000",
         "--dataDir", "/mnt/docker/elasticsearch"
       ]
     }
