@@ -30,3 +30,12 @@ gluster_mount_info: ""
 
 # The directory into which the service credentials and Marathon launch JSON file will be written
 deploy_home: deploy
+
+# Default consul settings for any node
+consul_version: 0.6.4
+consul_datacenter: demo
+consul_use_systemd: true
+consul_install_nginx: false
+consul_install_nginx_config: false
+consul_client_address_bind: true
+consul_join_at_start: trueq

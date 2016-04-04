@@ -49,7 +49,7 @@
     tags: always
 
 #
-# Update /etc/hosts network names if using that instead of dnsmasq or dns
+# Update /etc/hosts network names if using that instead of DNS
 #
 - name: Update /etc/hosts
   hosts: "tag_Type_storage:tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}"
@@ -63,7 +63,7 @@
     tags: use_hosts_file
 
 #
-# Configure zookeeper(s)
+# Configure zookeeper(s) and Dnsmasq
 #
 - name: Configure zookeeper(s)
   hosts: "tag_Type_mesos:&tag_Cluster_{{ ec2_tag_Cluster }}:&tag_Role_master"
@@ -75,7 +75,12 @@
   roles:
     - { role: java, tags: ['zookeeper', 'java'] }
     - { role: zookeeper, tags: ['zookeeper'] }
+    - { role: dnsmasq, dnsmasq_server: '8.8.8.8',tags: ['dnsmasq'] }
   tasks:
+
+    - name: Create Dnsmasq config file
+      template: src=files/10-consul.j2 dest=/etc/dnsmasq.d/10-consul mode=0644
+      tags: dnsmasq
 
     - name: Start zookeeper
       service: name=zookeeper state=started enabled=yes
@@ -112,6 +117,7 @@
 
   - name: Update /etc/fstab file
     lineinfile: dest=/etc/fstab line="{{ gluster_mount_info }}" state=present
+    when: gluster_mount_info|default("") != ""
     tags: gluster
 
   - name: Start docker
@@ -127,26 +133,14 @@
   # If this is your initial install you'll need at least a network restart to get this into /etc/resolv.conf
   # To pick up all the other system settings and possible RPM updates you'll want to reboot once before using
   # Note: The config file is saved to each node as if not bound to the local interface it would use IPv6
-  - name: Ensure mesos-dns servers are configured in dhclient.conf
+  - name: Ensure dns servers are configured in dhclient.conf
     blockinfile:
       dest: /etc/dhcp/dhclient.conf
       block: |
         {{ dns_servers }}
     tags:
       - install_common_software
-      - mesos-dns
-
-  - name: Ensure mesos-dns config directory is present
-    file: path=/etc/mesos-dns state=directory
-    tags:
-      - install_common_software
-      - mesos-dns
-
-  - name: Create meso-dns config file
-    template: src=files/mesos-dns-config.j2 dest=/etc/mesos-dns/config.json mode=0644
-    tags:
-      - install_common_software
-      - mesos-dns
+      - dnsmasq
 
 #
 # Install Mesos master(s)
@@ -158,11 +152,15 @@
   vars_files:
     - "vars/{{ varfile }}"
   vars:
+    - mesos_masters: "{% for host in groups['mesos_masters'] %}{{ hostvars[host].ec2_tag_Name }}{% if not loop.last %},{% endif %}{% endfor %}"
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
+    - consul_is_server: true
+    - consul_is_ui: true
   roles:
     - { role: 'mesos', mesos_install_mode: "master-slave", "mesos_default_role": "master_node", "mesos_quorum": "{{ ((mesos_master_count / 2) + 1)|int }}", tags: ['mesos_masters', 'mesos'] }
     - { role: 'marathon', marathon_hostname: "{{ ec2_tag_Name }}.{{ domain }}", "mesos_role": "master_node", tags: ['mesos_masters', 'marathon', 'haproxy'] }
     - { role: 'chronos', chronos_zk_connect: "zk://{{ zookeeper_hostnames }}/{{chronos_zk_chroot}}", tags: ['mesos_masters', 'chronos'] }
+    - { role: 'consul', consul_servers: ["{{ mesos_masters }}"], consul_bootstrap: "true", consul_bind_address: "{{ ec2_private_ip_address }}", consul_node_name: "{{ ec2_tag_Name }}", consul_client_address: "{{ ec2_private_ip_address }}", tags: ['mesos_masters', 'consul']}
   pre_tasks:
 
     - name: Install HAProxy
@@ -194,9 +192,11 @@
   vars_files:
     - "vars/{{ varfile }}"
   vars:
+    - mesos_masters: "{% for host in groups['mesos_masters'] %}{{ hostvars[host].ec2_tag_Name }}{% if not loop.last %},{% endif %}{% endfor %}"
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_tag_Name }}.{{ domain }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
   roles:
     - { role: 'mesos', mesos_install_mode: "slave", tags: ['mesos_workers'] }
+    - { role: 'consul', consul_servers: ["{{ mesos_masters }}"], consul_bind_address: "{{ ec2_private_ip_address }}", consul_node_name: "{{ ec2_tag_Name }}", consul_client_address: "{{ ec2_private_ip_address }}", tags: ['mesos_workers', 'consul']}
   tasks:
 
     - name: Ensure mesos-master service is not running

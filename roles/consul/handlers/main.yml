@@ -1,0 +1,16 @@
+---
+- name: restart consul
+  action: service name=consul state={{ consul_service_state }} enabled=yes
+  when: consul_manage_service
+
+- name: reload consul config
+  become: true
+  command: pkill -1 consul
+  when: consul_service_state is not "stopped" and consul_manage_service
+
+- name: reload systemd
+  become: true
+  command: systemctl daemon-reload
+
+- name: restart dnsmasq
+  service: name=dnsmasq state=restarted enabled=yes
