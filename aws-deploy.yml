@@ -24,7 +24,10 @@
     - name: Install marathon infrastructure launch script
       template: src=../files/infrastructure.json.j2 dest={{ deploy_home }}/infrastructure.json mode=400
 
-    - name: Install marathon infrastructure launch script
+    - name: Install marathon demo launch script
+      template: src=../files/demo.json.j2 dest={{ deploy_home }}/demo.json mode=400
+
+    - name: Install bookmarks listing
       template: src=../files/cluster-bookmarks.txt.j2 dest={{ deploy_home }}/cluster-bookmarks.txt mode=400
 
     - name: Install marathon launcher helper script
