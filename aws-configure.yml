@@ -95,7 +95,8 @@
   vars_files:
     - "vars/{{ varfile }}"
   vars:
-    - docker_opts: "--log-driver=fluentd --log-opt fluentd-address=localhost:24224 --storage-opt dm.datadev=/dev/docker-storage/data --storage-opt dm.metadatadev=/dev/docker-storage/metadata"
+    - docker_dns: "{% for host in groups['mesos_masters'] %}{{ hostvars[host].ec2_private_ip_address }}{% if not loop.last %},{% endif %}{% endfor %}"
+    - docker_opts: "--dns {{ docker_dns }} --dns-search service.consul --log-driver=fluentd --log-opt fluentd-address=localhost:24224 --storage-opt dm.datadev=/dev/docker-storage/data --storage-opt dm.metadatadev=/dev/docker-storage/metadata"
     - dns_servers: "{% for host in groups['mesos_masters'] %}prepend domain-name-servers {{ hostvars[host].ec2_private_ip_address }};\n{% endfor %}"
     - zookeeper_hostnames: "{% for host in groups['zookeeper_hosts'] %}{{ hostvars[host].ec2_private_ip_address }}:2181{% if not loop.last %},{% endif %}{% endfor %}"
     - tdagent_plugins:
