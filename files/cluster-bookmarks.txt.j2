@@ -2,9 +2,9 @@
 Mesos:          http://{{ hostvars[groups['zookeeper_hosts'][0]].ansible_nodename }}:5050
 Marathon:       http://{{ hostvars[groups['zookeeper_hosts'][0]].ansible_nodename }}:8080
 Chronos:        http://{{ hostvars[groups['zookeeper_hosts'][0]].ansible_nodename }}:4400
-Jenkins:        http://jenkins-master-i.marathon.mesos:8888
-InfluxDB:       http://influxdb-i.marathon.mesos:8083
-ElasticSearch:  http://elasticsearch-i.marathon.mesos:31100
-Grafana:        http://grafana-i.marathon.mesos:3000
-Kibana:         http://kibana-i.marathon.mesos:5601
+Jenkins:        http://jenkins-master-i.service.consul:8888
+InfluxDB:       http://influxdb-i.service.consul:8083
+ElasticSearch:  http://elasticsearch-i.service.consul:31100
+Grafana:        http://grafana-i.service.consul:3000
+Kibana:         http://kibana-i.service.consul:5601
 CAdvisor:       Running on each node on randomly selected port, use Marathon listing to find links

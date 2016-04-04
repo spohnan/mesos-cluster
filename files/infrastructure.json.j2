@@ -2,25 +2,26 @@
   "id": "/i",
   "apps": [
     {
-      "id": "/i/mesos-dns",
-      "instances": {{ mesos_master_count }},
-      "cpus": 0.2,
-      "mem": 128,
-      "constraints": [["hostname", "UNIQUE"]],
-      "acceptedResourceRoles": ["master_node"],
+      "id": "/i/mesos-consul",
+      "instances": 1,
+      "cpus": 0.1,
+      "mem": 256,
       "labels": { "billing": "infrastructure" },
-      "healthChecks": [{ "path": "/v1/version", "port": 8123, "timeoutSeconds": 300, "intervalSeconds": 20 }],
+      "healthChecks": [{ "path": "/health", "port": 24476 }],
       "container": {
         "type": "DOCKER",
         "docker": {
-          "image": "spohnan/mesos-dns",
           "network": "HOST",
-          "forcePullImage": true
-        },
-        "volumes": [
-          { "containerPath": "/config.json", "hostPath": "/etc/mesos-dns/config.json", "mode": "RO" }
-        ]
-      }
+          "image": "ciscocloud/mesos-consul:v0.3.2"
+        }
+      },
+      "args": [
+        "--zk=zk://{{ zookeeper_hostnames }}/mesos",
+        "--consul",
+        "--refresh=5s",
+        "--healthcheck=true",
+        "--healthcheck-ip=0.0.0.0"
+      ]
     }
     ,
     {
@@ -49,7 +50,7 @@
     ,
     {
       "id": "/i/cadvisor",
-      "dependencies": ["/i/influxdb", "/i/mesos-dns"],
+      "dependencies": ["/i/influxdb", "/i/mesos-consul"],
       "instances": {{ server_count }},
       "cpus": 0.2,
       "mem": 256,
@@ -78,7 +79,7 @@
       "args": [
         "-storage_driver", "influxdb",
         "-storage_driver_db", "cadvisor",
-        "-storage_driver_host", "influxdb-i.marathon.mesos:8086"
+        "-storage_driver_host", "influxdb-i.service.consul:8086"
       ]
     }
     ,
@@ -108,7 +109,7 @@
     ,
     {
       "id": "/i/elasticsearch",
-      "dependencies": [ "/i/mesos-dns", "/i/influxdb" ],
+      "dependencies": [ "/i/mesos-consul", "/i/influxdb" ],
       "instances": 1,
       "cpus": 0.2,
       "mem": 512,
@@ -147,13 +148,13 @@
         }
       },
       "env": {
-        "ELASTICSEARCH_URL": "http://elasticsearch-i.marathon.mesos:31000"
+        "ELASTICSEARCH_URL": "http://elasticsearch-i.service.consul:31000"
       }
     }
     ,
     {
       "id": "/i/jenkins-master",
-      "dependencies": [ "/i/mesos-dns" ],
+      "dependencies": [ "/i/mesos-consul" ],
       "instances": 1,
       "cpus": 0.2,
       "mem": 2048,
@@ -171,7 +172,7 @@
         ]
       },
       "env": {
-        "HOST": "jenkins-master-i.marathon.mesos",
+        "HOST": "jenkins-master-i.service.consul",
         "JENKINS_JAVA_OPTIONS": "-Dhudson.slaves.NodeProvisioner.MARGIN=40 -Dhudson.slaves.NodeProvisioner.MARGIN0=0.75 -Xms512m -Xmx2000m -Djava.awt.headless=true -Djava.net.preferIPv4Stack=true -Dorg.apache.commons.jelly.tags.fmt.timeZone=America/New_York",
         "JENKINS_CMDLINE_OPTIONS": "--httpPort=8888",
         "JENKINS_PORT": "8888",
