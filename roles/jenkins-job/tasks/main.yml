@@ -8,5 +8,5 @@
   tags: deploy-job
 
 - name: Reload Jenkins Config
-  command: curl -XPOST http://jenkins-master-i.marathon.mesos:8888/reload warn=false
+  command: curl -XPOST http://jenkins-master-i.service.consul:8888/reload warn=false
   tags: deploy-job

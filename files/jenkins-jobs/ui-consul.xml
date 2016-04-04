@@ -1,0 +1,72 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+    <actions/>
+    <description></description>
+    <keepDependencies>false</keepDependencies>
+    <properties>
+        <jenkins.model.BuildDiscarderProperty>
+            <strategy class="hudson.tasks.LogRotator">
+                <daysToKeep>-1</daysToKeep>
+                <numToKeep>6</numToKeep>
+                <artifactDaysToKeep>-1</artifactDaysToKeep>
+                <artifactNumToKeep>-1</artifactNumToKeep>
+            </strategy>
+        </jenkins.model.BuildDiscarderProperty>
+    </properties>
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.2">
+        <configVersion>2</configVersion>
+        <userRemoteConfigs>
+            <hudson.plugins.git.UserRemoteConfig>
+                <url>https://gitlab.devops.geointservices.io/training/ui-consul.git</url>
+            </hudson.plugins.git.UserRemoteConfig>
+        </userRemoteConfigs>
+        <branches>
+            <hudson.plugins.git.BranchSpec>
+                <name>*/master</name>
+            </hudson.plugins.git.BranchSpec>
+        </branches>
+        <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+        <submoduleCfg class="list"/>
+        <extensions>
+            <hudson.plugins.git.extensions.impl.CloneOption>
+                <shallow>true</shallow>
+                <noTags>false</noTags>
+                <reference></reference>
+            </hudson.plugins.git.extensions.impl.CloneOption>
+        </extensions>
+    </scm>
+    <assignedNode>mesos</assignedNode>
+    <canRoam>false</canRoam>
+    <disabled>false</disabled>
+    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+    <triggers>
+        <hudson.triggers.SCMTrigger>
+            <spec></spec>
+            <ignorePostCommitHooks>false</ignorePostCommitHooks>
+        </hudson.triggers.SCMTrigger>
+    </triggers>
+    <concurrentBuild>false</concurrentBuild>
+    <builders>
+        <hudson.tasks.Shell>
+            <command>make docker-build-clean</command>
+        </hudson.tasks.Shell>
+        <com.cloudbees.dockerpublish.DockerBuilder plugin="docker-build-publish@1.1">
+            <server plugin="docker-commons@1.2"/>
+            <registry plugin="docker-commons@1.2">
+                <credentialsId></credentialsId>
+            </registry>
+            <repoName>spohnan/ui-consul</repoName>
+            <noCache>false</noCache>
+            <forcePull>true</forcePull>
+            <skipBuild>true</skipBuild>
+            <skipDecorate>true</skipDecorate>
+            <repoTag></repoTag>
+            <skipPush>false</skipPush>
+            <createFingerprint>false</createFingerprint>
+            <skipTagLatest>false</skipTagLatest>
+        </com.cloudbees.dockerpublish.DockerBuilder>
+    </builders>
+    <publishers/>
+    <buildWrappers/>
+</project>
