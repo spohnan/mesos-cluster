@@ -1,0 +1,82 @@
+<?xml version='1.0' encoding='UTF-8'?>
+<project>
+    <actions/>
+    <description>ws-spring</description>
+    <keepDependencies>false</keepDependencies>
+    <properties>
+        <jenkins.model.BuildDiscarderProperty>
+            <strategy class="hudson.tasks.LogRotator">
+                <daysToKeep>-1</daysToKeep>
+                <numToKeep>6</numToKeep>
+                <artifactDaysToKeep>-1</artifactDaysToKeep>
+                <artifactNumToKeep>-1</artifactNumToKeep>
+            </strategy>
+        </jenkins.model.BuildDiscarderProperty>
+    </properties>
+    <scm class="hudson.plugins.git.GitSCM" plugin="git@2.4.4">
+        <configVersion>2</configVersion>
+        <userRemoteConfigs>
+            <hudson.plugins.git.UserRemoteConfig>
+                <url>https://gitlab.devops.geointservices.io/training/ws-spring.git</url>
+            </hudson.plugins.git.UserRemoteConfig>
+        </userRemoteConfigs>
+        <branches>
+            <hudson.plugins.git.BranchSpec>
+                <name>*/master</name>
+            </hudson.plugins.git.BranchSpec>
+        </branches>
+        <doGenerateSubmoduleConfigurations>false</doGenerateSubmoduleConfigurations>
+        <submoduleCfg class="list"/>
+        <extensions/>
+    </scm>
+    <assignedNode>mesos</assignedNode>
+    <canRoam>false</canRoam>
+    <disabled>false</disabled>
+    <blockBuildWhenDownstreamBuilding>false</blockBuildWhenDownstreamBuilding>
+    <blockBuildWhenUpstreamBuilding>false</blockBuildWhenUpstreamBuilding>
+    <triggers>
+        <hudson.triggers.SCMTrigger>
+            <spec></spec>
+            <ignorePostCommitHooks>false</ignorePostCommitHooks>
+        </hudson.triggers.SCMTrigger>
+    </triggers>
+    <concurrentBuild>false</concurrentBuild>
+    <builders>
+        <hudson.tasks.Shell>
+            <command># Build Java artifact using a container
+                docker run --rm \
+                -v &quot;$(pwd):/usr/local/ws-spring/&quot; \
+                -v /root/.m2:/root/.m2 \
+                spohnan/build-jdk8 sh -c &quot;cd /usr/local/ws-spring/; mvn package&quot;</command>
+        </hudson.tasks.Shell>
+        <com.cloudbees.dockerpublish.DockerBuilder plugin="docker-build-publish@1.2.1">
+            <server plugin="docker-commons@1.3.1"/>
+            <registry plugin="docker-commons@1.3.1">
+                <credentialsId></credentialsId>
+            </registry>
+            <repoName>spohnan/ws-spring</repoName>
+            <noCache>false</noCache>
+            <forcePull>false</forcePull>
+            <dockerfilePath>packaging/docker/ws-spring/Dockerfile</dockerfilePath>
+            <skipBuild>false</skipBuild>
+            <skipDecorate>true</skipDecorate>
+            <repoTag></repoTag>
+            <skipPush>false</skipPush>
+            <createFingerprint>false</createFingerprint>
+            <skipTagLatest>false</skipTagLatest>
+            <buildAdditionalArgs></buildAdditionalArgs>
+            <forceTag>false</forceTag>
+        </com.cloudbees.dockerpublish.DockerBuilder>
+    </builders>
+    <publishers>
+        <hudson.tasks.ArtifactArchiver>
+            <artifacts>target/ws-spring.jar</artifacts>
+            <allowEmptyArchive>false</allowEmptyArchive>
+            <onlyIfSuccessful>false</onlyIfSuccessful>
+            <fingerprint>false</fingerprint>
+            <defaultExcludes>true</defaultExcludes>
+            <caseSensitive>true</caseSensitive>
+        </hudson.tasks.ArtifactArchiver>
+    </publishers>
+    <buildWrappers/>
+</project>
