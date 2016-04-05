@@ -176,6 +176,20 @@
         - mesos_masters
         - haproxy
 
+    - name: Install HAProxy/Marathon proxy
+      copy: src=../files/haproxy-marathon-bridge.sh dest=/usr/local/sbin/haproxy-marathon-bridge.sh mode=0755
+      tags:
+        - mesos_masters
+        - haproxy
+
+    - name: Configure HAProxy/Marathon proxy
+      command: "/usr/local/sbin/haproxy-marathon-bridge.sh install_haproxy_system master.mesos.service.consul:8080"
+      args:
+        creates: /etc/cron.d/haproxy-marathon-bridge
+      tags:
+        - mesos_masters
+        - haproxy
+
   tasks:
 
     - name: Start marathon
