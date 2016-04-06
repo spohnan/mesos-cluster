@@ -2,7 +2,9 @@
 Mesos:          http://{{ hostvars[groups['zookeeper_hosts'][0]].ansible_nodename }}:5050
 Marathon:       http://{{ hostvars[groups['zookeeper_hosts'][0]].ansible_nodename }}:8080
 Chronos:        http://{{ hostvars[groups['zookeeper_hosts'][0]].ansible_nodename }}:4400
+Consul          http://master.mesos.service.consul:8500
 Jenkins:        http://jenkins-master-i.service.consul:8888
+HAProxy         http://master.mesos.service.consul:9090/haproxy?stats (admin/admin)
 InfluxDB:       http://influxdb-i.service.consul:8083
 ElasticSearch:  http://elasticsearch-i.service.consul:31100
 Grafana:        http://grafana-i.service.consul:3000
