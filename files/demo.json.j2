@@ -5,7 +5,7 @@
       "id": "/demo/ui-consul",
       "instances": 1,
       "cpus": 0.25,
-      "mem": 200,
+      "mem": 300,
       "labels": { "billing": "project-x" },
       "healthChecks": [ { "path": "/health", "portIndex": 0 } ],
       "container": {
@@ -13,7 +13,7 @@
         "docker": {
           "image": "spohnan/ui-consul:latest",
           "network": "BRIDGE",
-          "portMappings": [ { "containerPort": 8080, "hostPort": 0, "servicePort": 80 } ],
+          "portMappings": [ { "containerPort": 8080, "hostPort": 0 } ],
           "forcePullImage": true
         }
       },
